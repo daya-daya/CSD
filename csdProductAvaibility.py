@@ -139,7 +139,55 @@ st.markdown(f"""
         }}
     </style>
 """, unsafe_allow_html=True)
-
+st.markdown(f"""
+    <style>
+        .header-container {{
+           background-image: linear-gradient(to right, maroon, maroon);
+            padding: 20px;
+            text-align: center;
+            color: white;
+            border-radius: 20px;
+        }}
+        .header-title {{
+            font-size: 2.5em;
+            font-family: 'Trebuchet MS', sans-serif;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }}
+        .header-subtitle {{
+            font-size: 1.5em;
+            font-family: 'Trebuchet MS', sans-serif;
+        }}
+        .sidebar .sidebar-content {{
+            background-color: #3a6186;
+            color: white;
+        }}
+        .sidebar .block-container {{
+            padding: 1rem;
+        }}
+        .stButton>button {{
+            background-color: #89253e;
+            color: white;
+            border-radius: 10px;
+            font-weight: bold;
+        }}
+        .stTextInput>div>div>input {{
+            border-radius: 5px;
+            border: 2px solid #89253e;
+        }}
+        .stDataFrame>div {{
+            background-color: #ffffff;
+            border: 2px solid #89253e;
+            border-radius: 10px;
+            color: #000000; /* Ensure text color is black */
+        }}
+        @media only screen and (max-width: 600px) {{
+            .stDataFrame>div {{
+                color: #000000; /* Ensure text color is black on mobile */
+            }}
+        }}
+    </style>
+""", unsafe_allow_html=True)
 st.markdown("""
     <div class="header-container">
         <div class="header-title"><b>UNIT RUN CANTEEN</b></div>
