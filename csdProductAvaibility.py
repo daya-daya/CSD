@@ -93,6 +93,13 @@ def search_data(data, search_term):
 
 def color_banded_rows(row):
     return ['background-color: #e0f7fa' if row.name % 2 == 0 else 'background-color: #ffffff'] * len(row)
+st.markdown("""
+    <marquee behavior="scroll" direction="left" scrollamount="8" style="color:red;font-weight:bold;background-color:yellow">
+        CANTEEN TIMINGS: 09:00-12:45 AND 14:00-18:00 FRIDAY HALFDAY WORKING AND MONDAY WEEKLY OFF
+        &nbsp;&nbsp;&nbsp;&nbsp;
+        CANTEEN TIMINGS: 09:00-12:45 AND 14:00-18:00 FRIDAY HALFDAY WORKING AND MONDAY WEEKLY OFF
+    </marquee>
+""", unsafe_allow_html=True)
 
 
 
