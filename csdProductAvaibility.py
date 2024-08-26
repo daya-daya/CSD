@@ -95,50 +95,7 @@ def color_banded_rows(row):
     return ['background-color: #e0f7fa' if row.name % 2 == 0 else 'background-color: #ffffff'] * len(row)
 
 
-# Front page styling
-st.markdown(f"""
-    <style>
-        .header-container {{
-           background-image: linear-gradient(to right, maroon,maroon);
-            padding: 20px;
-            text-align: center;
-            color: white;
-            border-radius: 20px;
-        }}
-        .header-title {{
-            font-size: 2.5em;
-            font-family: 'Trebuchet MS', sans-serif;
-            font-weight: bold;
-            margin-bottom: 10px;
-        }}
-        .header-subtitle {{
-            font-size: 1.5em;
-            font-family: 'Trebuchet MS', sans-serif;
-        }}
-        .sidebar .sidebar-content {{
-            background-color: #3a6186;
-            color: white;
-        }}
-        .sidebar .block-container {{
-            padding: 1rem;
-        }}
-        .stButton>button {{
-            background-color: #89253e;
-            color: white;
-            border-radius: 10px;
-            font-weight: bold;
-        }}
-        .stTextInput>div>div>input {{
-            border-radius: 5px;
-            border: 2px solid #89253e;
-        }}
-        .stDataFrame>div {{
-            background-color: #ffffff;
-            border: 2px solid #89253e;
-            border-radius: 10px;
-        }}
-    </style>
-""", unsafe_allow_html=True)
+
 st.markdown(f"""
     <style>
         .header-container {{
