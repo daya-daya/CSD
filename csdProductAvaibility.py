@@ -92,7 +92,7 @@ def search_data(data, search_term):
 
 
 def color_banded_rows(row):
-    return ['background-color: #d4edda; color: #ffffff' if row.name % 2 == 0 else 'background-color: #fff3cd; color: #ffffff'] * len(row)
+    return ['background-color: #f5f5f5; color: #333333' if row.name % 2 == 0 else 'background-color: #ffffff; color: #333333'] * len(row)
 
 
 st.markdown("""
@@ -143,45 +143,45 @@ st.markdown(f"""
             background-color: #ffffff;
             border: 2px solid #89253e;
             border-radius: 10px;
-            color: #000000; /* Ensure text color is black */
+            color: #333333; /* Ensure text color is dark gray */
         }}
         @media (prefers-color-scheme: dark) {{
             body {{
                 background-color: #1a1a1a; /* Dark background color */
-                color: #ffffff; /* White text color for dark mode */
+                color: #e0e0e0; /* Light text color for dark mode */
             }}
             .header-container {{
-                color: #ffffff; /* White text in header for dark mode */
+                color: #e0e0e0; /* Light text in header for dark mode */
             }}
             .sidebar .sidebar-content {{
                 background-color: #333333; /* Dark sidebar background */
             }}
             .stButton>button {{
                 background-color: #ff6b6b; /* Slightly brighter button for dark mode */
-                color: #ffffff; /* White button text */
+                color: #e0e0e0; /* Light button text */
             }}
             .stTextInput>div>div>input {{
                 background-color: #333333; /* Dark input background */
-                color: #ffffff; /* White input text */
+                color: #e0e0e0; /* Light input text */
             }}
             .stDataFrame>div {{
-                background-color: #333333; /* Dark DataFrame background */
-                color: #ffffff; /* White DataFrame text */
+                background-color: #2e2e2e; /* Dark DataFrame background */
+                color: #e0e0e0; /* Light DataFrame text */
             }}
             .stDataFrame>div .dataframe-row {{
-                background-color: #444444 !important; /* Darker row background */
-                color: #ffffff !important; /* White row text */
+                background-color: #333333 !important; /* Darker row background */
+                color: #e0e0e0 !important; /* Light row text */
             }}
         }}
         /* Ensure visibility on small screens */
         @media only screen and (max-width: 600px) {{
             .stDataFrame>div {{
-                color: #ffffff !important; /* Ensure white text on mobile in dark mode */
-                background-color: #333333 !important; /* Darker background for visibility */
+                color: #e0e0e0 !important; /* Ensure light text on mobile in dark mode */
+                background-color: #2e2e2e !important; /* Darker background for visibility */
             }}
             .stDataFrame>div .dataframe-row {{
-                color: #ffffff !important; /* Ensure white text on mobile in dark mode */
-                background-color: #444444 !important; /* Darker row background */
+                color: #e0e0e0 !important; /* Ensure light text on mobile in dark mode */
+                background-color: #333333 !important; /* Darker row background */
             }}
         }}
     </style>
