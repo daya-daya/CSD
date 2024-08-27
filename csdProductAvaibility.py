@@ -1,6 +1,7 @@
 import streamlit as st
 import pandas as pd
 import os
+from datetime import datetime
 
 # Define your admin credentials (for simplicity, hard-coded here)
 ADMIN_USERNAME = "admin"
@@ -8,15 +9,15 @@ ADMIN_PASSWORD = "Anildaya"
 
 # Directory to store uploaded files
 UPLOAD_DIR = "uploaded_files"
+DEMAND_DIR = "Demand_stock"
+
+# Ensure the directories exist
+os.makedirs(UPLOAD_DIR, exist_ok=True)
+os.makedirs(DEMAND_DIR, exist_ok=True)
 
 
-# Remove extension
 def remove_extension(file_name):
     return os.path.splitext(file_name)[0]
-
-
-# Ensure the upload directory exists
-os.makedirs(UPLOAD_DIR, exist_ok=True)
 
 
 def authenticate(username, password):
@@ -92,9 +93,61 @@ def search_data(data, search_term):
 
 
 def color_banded_rows(row):
-    return ['background-color: #f9f5e3; color: #333333' if row.name % 2 == 0 else 'background-color: #ffffff; color: #333333'] * len(row)
+    return [
+        'background-color: #f9f5e3; color: #333333' if row.name % 2 == 0 else 'background-color: #ffffff; color: #333333'] * len(
+        row)
 
 
+def save_demand_data(data):
+    today = datetime.now()
+    next_day = today + pd.DateOffset(days=1)
+    date_str = next_day.strftime("%Y-%m-%d")
+    file_name = f"Demand_{date_str}.xlsx"
+    file_path = os.path.join(DEMAND_DIR, file_name)
+
+    # Check if file already exists
+    if os.path.exists(file_path):
+        existing_data = pd.read_excel(file_path, engine='openpyxl')
+        data = pd.concat([existing_data, data], ignore_index=True)
+
+    data.to_excel(file_path, index=False, engine='openpyxl')
+    st.success(f"Demand data saved to {file_path}")
+
+
+def render_demand_form():
+    with st.form(key='demand_form'):
+        service_no = st.text_input("Service No.")
+        name = st.text_input("Name")
+        product_name = st.text_input("Product Name")
+        quantity = st.number_input("Quantity", min_value=1)
+        mobile_no = st.text_input("Mobile No.")
+        alternate_no = st.text_input("Alternate No. (optional)", "")
+        address = st.text_area("Address")
+        image = st.file_uploader("Image (optional)", type=['jpg', 'png', 'jpeg'], label_visibility="collapsed")
+
+        submit_button = st.form_submit_button("Submit")
+
+        if submit_button:
+            if not (service_no and name and product_name and quantity and mobile_no and address):
+                st.error("Please fill in all required fields.")
+                return
+
+            data = pd.DataFrame({
+                "S/No.": [1],  # Adjust this if you need a proper sequence
+                "Service No.": [service_no],
+                "Name": [name],
+                "Product Name": [product_name],
+                "Quantity": [quantity],
+                "Mobile No.": [mobile_no],
+                "Alternate No.": [alternate_no],
+                "Address": [address],
+                "Image": [image.name if image else ""]
+            })
+
+            save_demand_data(data)
+
+
+# Application Logic
 st.markdown("""
     <marquee behavior="scroll" direction="left" scrollamount="8" style="color:red;font-weight:bold;background-color:yellow">
         CANTEEN TIMINGS: 09:00-12:45 AND 14:00-18:00 FRIDAY HALFDAY WORKING AND MONDAY WEEKLY OFF
@@ -199,8 +252,13 @@ if 'page' not in st.session_state:
     st.session_state.page = "home"
 
 # Page Navigation
-if st.button("Admin"):
-    st.session_state.page = "admin"
+col1, col2 = st.columns([1, 3])
+with col1:
+    if st.button("Admin"):
+        st.session_state.page = "admin"
+with col2:
+    if st.button("Demand"):
+        st.session_state.page = "demand"
 
 
 # Common Search Box
@@ -283,6 +341,9 @@ if st.session_state.page == "admin":
                 st.write("No files available. Please upload a file via the Admin Panel.")
             processed_data = process_data(load_data(st.session_state.file_path))
             render_search_box()
+
+elif st.session_state.page == "demand":
+    render_demand_form()
 
 else:
     # Display data from the uploaded_files directory
