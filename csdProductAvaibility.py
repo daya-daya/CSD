@@ -93,15 +93,14 @@ def search_data(data, search_term):
 
 def color_banded_rows(row):
     return ['background-color: #e0f7fa' if row.name % 2 == 0 else 'background-color: #ffffff'] * len(row)
+
 st.markdown("""
-    <marquee behavior="scroll" direction="left" scrollamount="6" style="color:red;font-weight:bold;background-color:yellow">
+    <marquee behavior="scroll" direction="left" scrollamount="8" style="color:red;font-weight:bold;background-color:yellow">
         CANTEEN TIMINGS: 09:00-12:45 AND 14:00-18:00 FRIDAY HALFDAY WORKING AND MONDAY WEEKLY OFF
         &nbsp;&nbsp;&nbsp;&nbsp;
         CANTEEN TIMINGS: 09:00-12:45 AND 14:00-18:00 FRIDAY HALFDAY WORKING AND MONDAY WEEKLY OFF
     </marquee>
 """, unsafe_allow_html=True)
-
-
 
 st.markdown(f"""
     <style>
@@ -145,13 +144,48 @@ st.markdown(f"""
             border-radius: 10px;
             color: #000000; /* Ensure text color is black */
         }}
+        @media (prefers-color-scheme: dark) {{
+            body {{
+                background-color: #1a1a1a; /* Dark background color */
+                color: #ffffff; /* White text color for dark mode */
+            }}
+            .header-container {{
+                color: #ffffff; /* White text in header for dark mode */
+            }}
+            .sidebar .sidebar-content {{
+                background-color: #333333; /* Dark sidebar background */
+            }}
+            .stButton>button {{
+                background-color: #ff6b6b; /* Slightly brighter button for dark mode */
+                color: #ffffff; /* White button text */
+            }}
+            .stTextInput>div>div>input {{
+                background-color: #333333; /* Dark input background */
+                color: #ffffff; /* White input text */
+            }}
+            .stDataFrame>div {{
+                background-color: #333333; /* Dark DataFrame background */
+                color: #ffffff; /* White DataFrame text */
+            }}
+            .stDataFrame>div .dataframe-row {{
+                background-color: #444444 !important; /* Darker row background */
+                color: #ffffff !important; /* White row text */
+            }}
+        }}
+        /* Ensure visibility on small screens */
         @media only screen and (max-width: 600px) {{
             .stDataFrame>div {{
-                color: #000000; /* Ensure text color is black on mobile */
+                color: #ffffff !important; /* Ensure white text on mobile in dark mode */
+                background-color: #333333 !important; /* Darker background for visibility */
+            }}
+            .stDataFrame>div .dataframe-row {{
+                color: #ffffff !important; /* Ensure white text on mobile in dark mode */
+                background-color: #444444 !important; /* Darker row background */
             }}
         }}
     </style>
 """, unsafe_allow_html=True)
+
 st.markdown("""
     <div class="header-container">
         <div class="header-title"><b>UNIT RUN CANTEEN</b></div>
