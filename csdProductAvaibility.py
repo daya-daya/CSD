@@ -92,7 +92,7 @@ def search_data(data, search_term):
 
 
 def color_banded_rows(row):
-    return ['background-color: #f5f5f5; color: #333333' if row.name % 2 == 0 else 'background-color: #ffffff; color: #333333'] * len(row)
+    return ['background-color: #f9f5e3; color: #333333' if row.name % 2 == 0 else 'background-color: #ffffff; color: #333333'] * len(row)
 
 
 st.markdown("""
@@ -106,7 +106,7 @@ st.markdown("""
 st.markdown(f"""
     <style>
         .header-container {{
-           background-image: linear-gradient(to right, maroon, maroon);
+           background-image: linear-gradient(to right, #4caf50, #4caf50);
             padding: 20px;
             text-align: center;
             color: white;
@@ -130,57 +130,57 @@ st.markdown(f"""
             padding: 1rem;
         }}
         .stButton>button {{
-            background-color: #89253e;
+            background-color: #ff5722;
             color: white;
             border-radius: 10px;
             font-weight: bold;
         }}
         .stTextInput>div>div>input {{
             border-radius: 5px;
-            border: 2px solid #89253e;
+            border: 2px solid #ff5722;
         }}
         .stDataFrame>div {{
             background-color: #ffffff;
-            border: 2px solid #89253e;
+            border: 2px solid #ff5722;
             border-radius: 10px;
             color: #333333; /* Ensure text color is dark gray */
         }}
         @media (prefers-color-scheme: dark) {{
             body {{
                 background-color: #1a1a1a; /* Dark background color */
-                color: #e0e0e0; /* Light text color for dark mode */
+                color: #f5f5f5; /* Light text color for dark mode */
             }}
             .header-container {{
-                color: #e0e0e0; /* Light text in header for dark mode */
+                color: #f5f5f5; /* Light text in header for dark mode */
             }}
             .sidebar .sidebar-content {{
                 background-color: #333333; /* Dark sidebar background */
             }}
             .stButton>button {{
-                background-color: #ff6b6b; /* Slightly brighter button for dark mode */
-                color: #e0e0e0; /* Light button text */
+                background-color: #ff6f61; /* Slightly brighter button for dark mode */
+                color: #f5f5f5; /* Light button text */
             }}
             .stTextInput>div>div>input {{
                 background-color: #333333; /* Dark input background */
-                color: #e0e0e0; /* Light input text */
+                color: #f5f5f5; /* Light input text */
             }}
             .stDataFrame>div {{
                 background-color: #2e2e2e; /* Dark DataFrame background */
-                color: #e0e0e0; /* Light DataFrame text */
+                color: #f5f5f5; /* Light DataFrame text */
             }}
             .stDataFrame>div .dataframe-row {{
                 background-color: #333333 !important; /* Darker row background */
-                color: #e0e0e0 !important; /* Light row text */
+                color: #f5f5f5 !important; /* Light row text */
             }}
         }}
         /* Ensure visibility on small screens */
         @media only screen and (max-width: 600px) {{
             .stDataFrame>div {{
-                color: #e0e0e0 !important; /* Ensure light text on mobile in dark mode */
+                color: #f5f5f5 !important; /* Ensure light text on mobile in dark mode */
                 background-color: #2e2e2e !important; /* Darker background for visibility */
             }}
             .stDataFrame>div .dataframe-row {{
-                color: #e0e0e0 !important; /* Ensure light text on mobile in dark mode */
+                color: #f5f5f5 !important; /* Ensure light text on mobile in dark mode */
                 background-color: #333333 !important; /* Darker row background */
             }}
         }}
