@@ -92,7 +92,7 @@ def search_data(data, search_term):
 
 
 def color_banded_rows(row):
-    return ['background-color: #a80000; color: #ffffff' if row.name % 2 == 0 else 'background-color: #ffd700; color: #ffffff'] * len(row)
+    return ['background-color: #d4edda; color: #ffffff' if row.name % 2 == 0 else 'background-color: #fff3cd; color: #ffffff'] * len(row)
 
 
 st.markdown("""
