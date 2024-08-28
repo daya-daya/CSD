@@ -296,7 +296,7 @@ with col2:
 
 # Common Search Box
 def render_search_box():
-    search_term = st.text_input("Search Item Description", "")
+    search_term = st.text_input("Search Item Description", key="search_box")
     if search_term:
         files = list_files()
         if files:
@@ -312,6 +312,7 @@ def render_search_box():
         else:
             st.write("No files available. Please upload a file via the Admin Panel.")
     return search_term
+
 
 
 # Main Application Logic
