@@ -67,6 +67,9 @@ def process_data(data):
         st.error(f"Missing required columns in data.")
         return pd.DataFrame()  # Return empty DataFrame
 
+    # Filter out rows where all the required columns are null or zero
+    data = data[~(data[required_columns].isnull().all(axis=1) | (data[required_columns] == 0).all(axis=1))]
+
     data = data[required_columns]
     data = data.rename(columns={'RRATE': 'Price'})
 
@@ -83,6 +86,7 @@ def process_data(data):
     data = data.drop(columns=['Closing'])
 
     return data
+
 
 
 def search_data(data, search_term):
