@@ -7,10 +7,9 @@ from datetime import datetime
 ADMIN_USERNAME = "admin"
 ADMIN_PASSWORD = "Anildaya"
 
-# Use a safe location for temporary storage (especially in cloud environments like Streamlit Cloud)
-BASE_DIR = "/tmp" if os.getenv("IS_DEPLOYED") else os.getcwd()
-UPLOAD_DIR = os.path.join(BASE_DIR, "uploaded_files")
-DEMAND_DIR = os.path.join(BASE_DIR, "Demand_stock")
+# Directory to store uploaded files
+UPLOAD_DIR = "uploaded_files"
+DEMAND_DIR = "Demand_stock"
 
 # Ensure the directories exist
 os.makedirs(UPLOAD_DIR, exist_ok=True)
@@ -103,7 +102,7 @@ def save_demand_data(data):
     today = datetime.now()
     next_day = today + pd.DateOffset(days=1)
     date_str = next_day.strftime("%Y-%m-%d")
-    file_name = f"Dema_{date_str}.xlsx"
+    file_name = f"Demand_{date_str}.xlsx"
     file_path = os.path.join(DEMAND_DIR, file_name)
 
     # Check if file already exists
@@ -113,6 +112,7 @@ def save_demand_data(data):
 
     data.to_excel(file_path, index=False, engine='openpyxl')
     st.success(f"Demand data saved to {file_path}")
+
 
 
 def render_demand_form():
@@ -146,7 +146,6 @@ def render_demand_form():
             })
 
             save_demand_data(data)
-
 
 # Application Logic
 st.markdown("""
@@ -235,46 +234,131 @@ st.markdown(f"""
             }}
             .stDataFrame>div .dataframe-row {{
                 color: #f5f5f5 !important; /* Ensure light text on mobile in dark mode */
-                background-color: #333333 !important; /* Darker row background for visibility */
+                background-color: #333333 !important; /* Darker row background */
             }}
         }}
     </style>
 """, unsafe_allow_html=True)
 
-st.sidebar.image("path/to/logo.png", use_column_width=True)
-st.sidebar.title("Admin Login")
-username = st.sidebar.text_input("Username")
-password = st.sidebar.text_input("Password", type="password")
+st.markdown("""
+    <div class="header-container">
+        <div class="header-title"><b>UNIT RUN CANTEEN</b></div>
+        <div class="header-subtitle"><b>THE PARACHUTE REGIMENT TRAINING CENTRE</b></div>
+    </div>
+""", unsafe_allow_html=True)
 
-if st.sidebar.button("Login"):
-    if authenticate(username, password):
-        st.success("Login successful!")
-        st.sidebar.markdown("---")
-        st.sidebar.markdown("### Upload Data File")
-        uploaded_file = st.sidebar.file_uploader("Choose a file", type=['xlsx', 'xls'])
+# Initialize session state for page navigation
+if 'page' not in st.session_state:
+    st.session_state.page = "home"
+
+# Page Navigation
+col1, col2 = st.columns([1, 3])
+with col1:
+    if st.button("Admin"):
+        st.session_state.page = "admin"
+with col2:
+    if st.button("Demand"):
+        st.session_state.page = "demand"
+
+
+# Common Search Box
+def render_search_box():
+    search_term = st.text_input("Search Item Description", "")
+    if search_term:
+        files = list_files()
+        if files:
+            all_data = pd.concat([process_data(load_data(os.path.join(UPLOAD_DIR, file))) for file in files if
+                                  load_data(os.path.join(UPLOAD_DIR, file)) is not None], ignore_index=True)
+            result_data = search_data(all_data, search_term)
+
+            if not result_data.empty:
+                styled_data = result_data.style.apply(color_banded_rows, axis=1)
+                st.dataframe(styled_data, use_container_width=True, hide_index=True)
+            else:
+                st.write("No matching items found.")
+        else:
+            st.write("No files available. Please upload a file via the Admin Panel.")
+    return search_term
+
+
+# Main Application Logic
+if st.session_state.page == "admin":
+    if 'logged_in' not in st.session_state:
+        st.session_state.logged_in = False
+
+    if not st.session_state.logged_in:
+        st.sidebar.header("Admin Login")
+        username = st.sidebar.text_input("Username")
+        password = st.sidebar.text_input("Password", type="password")
+
+        if st.sidebar.button("Login"):
+            if authenticate(username, password):
+                st.session_state.logged_in = True
+                st.sidebar.success("Logged in successfully!")
+            else:
+                st.sidebar.error("Invalid username or password.")
+    else:
+        st.sidebar.header("Admin Panel")
+
+        st.sidebar.subheader("Upload File")
+        uploaded_file = st.sidebar.file_uploader("Upload your Excel file", type=["xlsx", "xls"])
 
         if uploaded_file is not None:
             file_path = save_uploaded_file(uploaded_file)
-            st.sidebar.markdown("File saved successfully!")
+            st.session_state.file_path = file_path
+            st.sidebar.success(f"File uploaded: {uploaded_file.name}")
 
-            data = load_data(file_path)
-            if data is not None:
-                st.dataframe(data.style.apply(color_banded_rows, axis=1))
+        st.sidebar.subheader("Delete File")
+        files = list_files()
+        if files:
+            file_to_delete = st.sidebar.selectbox("Select file to delete", files)
 
-                search_term = st.text_input("Search by Item Description", "")
-                filtered_data = search_data(data, search_term)
-
-                st.dataframe(filtered_data.style.apply(color_banded_rows, axis=1))
-
-                if st.button("Save to Demand Stock"):
-                    save_demand_data(filtered_data)
-
-                st.markdown("---")
-                st.markdown("### Demand Form")
-                render_demand_form()
-            else:
-                st.error("Failed to load data.")
+            if st.sidebar.button("Delete File"):
+                delete_uploaded_file(file_to_delete)
+                st.sidebar.success(f"File deleted: {file_to_delete}")
+                if 'file_path' in st.session_state and file_to_delete == os.path.basename(st.session_state.file_path):
+                    st.session_state.pop('file_path', None)
         else:
-            st.warning("Please upload a data file.")
+            st.sidebar.write("No files to delete.")
+
+        # Show data if a file has been uploaded
+        if 'file_path' in st.session_state:
+            st.write("Welcome to the CSD PRTC!")
+            files = list_files()
+
+            if files:
+                render_search_box()
+
+                for file in files:
+                    st.write(f"### {remove_extension(file)}")  # Display the file name without extension
+                    data = load_data(os.path.join(UPLOAD_DIR, file))
+                    if data is not None:
+                        processed_data = process_data(data)
+                        styled_data = processed_data.style.apply(color_banded_rows, axis=1)
+                        st.dataframe(styled_data, use_container_width=True, hide_index=True)
+
+            else:
+                st.write("No files available. Please upload a file via the Admin Panel.")
+            processed_data = process_data(load_data(st.session_state.file_path))
+            render_search_box()
+
+elif st.session_state.page == "demand":
+    render_demand_form()
+
+else:
+    # Display data from the uploaded_files directory
+    files = list_files()
+
+    if files:
+        render_search_box()
+
+        for file in files:
+            st.write(f"### {remove_extension(file)}")  # Display the file name without extension
+            data = load_data(os.path.join(UPLOAD_DIR, file))
+            if data is not None:
+                processed_data = process_data(data)
+                styled_data = processed_data.style.apply(color_banded_rows, axis=1)
+                st.dataframe(styled_data, use_container_width=True, hide_index=True)
+
     else:
-        st.error("Invalid username or password.")
+        st.write("No files available. Please upload a file via the Admin Panel.")
