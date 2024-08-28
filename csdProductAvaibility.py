@@ -296,7 +296,7 @@ with col2:
 
 # Common Search Box
 def render_search_box():
-    search_term = st.text_input("Search Item Description", key="search_box")
+    search_term = st.text_input("Search Item Description", key="search_box_unique_key")
     if search_term:
         files = list_files()
         if files:
