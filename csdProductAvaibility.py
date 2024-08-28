@@ -46,19 +46,24 @@ def list_files():
     return os.listdir(UPLOAD_DIR)
 
 
-def load_data(file):
+def load_data(file_path):
+    """Load Excel data from the given file path."""
     try:
-        if file.endswith('.xlsx'):
-            data = pd.read_excel(file, engine='openpyxl')
-        elif file.endswith('.xls'):
-            data = pd.read_excel(file, engine='xlrd')
+        # Determine the file extension and load the Excel file accordingly
+        if file_path.endswith('.xlsx'):
+            data = pd.read_excel(file_path, engine='openpyxl')
+        elif file_path.endswith('.xls'):
+            data = pd.read_excel(file_path, engine='xlrd')
         else:
-            st.error(f"Unsupported file format: {file}")
+            st.error(f"Unsupported file format: {file_path}")
             return None
+
+      #  st.write(f"File loaded successfully: {file_path}")
+        return data
+
     except Exception as e:
-        st.error(f"Error loading file {os.path.basename(file)}: {e}")
+        st.error(f"Error loading file {os.path.basename(file_path)}: {e}")
         return None
-    return data
 
 
 def process_data(data):
@@ -67,25 +72,39 @@ def process_data(data):
         st.error(f"Missing required columns in data.")
         return pd.DataFrame()  # Return empty DataFrame
 
-    # Filter out rows where all the required columns are null or zero
-    data = data[~(data[required_columns].isnull().all(axis=1) | (data[required_columns] == 0).all(axis=1))]
-
+    # Select and rename columns
     data = data[required_columns]
     data = data.rename(columns={'RRATE': 'Price'})
 
-    data.reset_index(drop=True, inplace=True)
-    data.index += 1
-    data.index.name = 'S.No'
-    data.reset_index(inplace=True)
-
+    # Convert price to numeric and format
     data['Price'] = pd.to_numeric(data['Price'], errors='coerce')
     data['Price'] = data['Price'].apply(lambda x: f"{x:.2f}" if pd.notnull(x) else '0.00')
 
+    # Create 'Available' column based on 'Closing' stock
     data['Available'] = data['Closing'].apply(lambda x: 'Yes' if pd.notnull(x) and x != 0 else 'No')
 
+    # Drop 'Closing' column as it's no longer needed
     data = data.drop(columns=['Closing'])
 
-    return data
+    # Filter out rows where any of the critical columns are invalid or empty
+    filtered_data = data.dropna(subset=['Index No', 'Item Description', 'Price', 'Available'])
+
+    # Further filter to ensure 'Price' and 'Available' are valid
+    filtered_data = filtered_data[filtered_data['Price'] != '0.00']
+    filtered_data = filtered_data[filtered_data['Available'] == 'Yes']
+
+    # Reset the index to create a sequential S.No column
+    filtered_data.reset_index(drop=True, inplace=True)
+    filtered_data.index += 1
+    filtered_data.index.name = 'S.No'
+
+    # Move index to a column and reset index
+    filtered_data = filtered_data.reset_index()
+
+    return filtered_data
+
+
+
 
 
 
