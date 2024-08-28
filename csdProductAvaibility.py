@@ -103,7 +103,7 @@ def save_demand_data(data):
     today = datetime.now()
     next_day = today + pd.DateOffset(days=1)
     date_str = next_day.strftime("%Y-%m-%d")
-    file_name = f"Demand_{date_str}.xlsx"
+    file_name = f"Dema_{date_str}.xlsx"
     file_path = os.path.join(DEMAND_DIR, file_name)
 
     # Check if file already exists
