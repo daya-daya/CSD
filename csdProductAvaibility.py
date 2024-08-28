@@ -30,15 +30,16 @@ def save_uploaded_file(uploaded_file):
         delete_uploaded_file(file)
 
     # Now save the new uploaded file
-    file_name, file_extension = os.path.splitext(uploaded_file.name)
-    if file_extension.lower() not in ['.xlsx', '.xls']:
-        st.error("Unsupported file extension. Please upload an Excel file.")
-        return None
-
     file_path = os.path.join(UPLOAD_DIR, uploaded_file.name)
     with open(file_path, "wb") as f:
         f.write(uploaded_file.getbuffer())
     return file_path
+
+
+def delete_uploaded_file(file_name):
+    file_path = os.path.join(UPLOAD_DIR, file_name)
+    if os.path.exists(file_path):
+        os.remove(file_path)
 
 
 def list_files():
@@ -57,18 +58,6 @@ def load_data(file_path):
             st.error(f"Unsupported file format: {file_path}")
             return None
 
-        # Optionally display the first few rows of the data for debugging
-        st.write(f"File loaded successfully: {file_path}")
-        st.write(data.head())
-
-        return data
-
-    except Exception as e:
-        st.error(f"Error loading file {os.path.basename(file_path)}: {e}")
-        return None
-
-
-      #  st.write(f"File loaded successfully: {file_path}")
         return data
 
     except Exception as e:
@@ -114,10 +103,6 @@ def process_data(data):
     return filtered_data
 
 
-
-
-
-
 def search_data(data, search_term):
     if search_term:
         pattern = f"{search_term}"
@@ -145,7 +130,6 @@ def save_demand_data(data):
 
     data.to_excel(file_path, index=False, engine='openpyxl')
     st.success(f"Demand data saved to {file_path}")
-
 
 
 def render_demand_form():
@@ -180,6 +164,7 @@ def render_demand_form():
 
             save_demand_data(data)
 
+
 # Application Logic
 st.markdown("""
     <marquee behavior="scroll" direction="left" scrollamount="8" style="color:red;font-weight:bold;background-color:yellow">
@@ -189,23 +174,32 @@ st.markdown("""
     </marquee>
 """, unsafe_allow_html=True)
 
+
 st.markdown(f"""
     <style>
+        body {{
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Arial', sans-serif;
+        }}
         .header-container {{
            background-image: linear-gradient(to right, #4caf50, #4caf50);
-            padding: 20px;
+            padding: 15px;
             text-align: center;
             color: white;
-            border-radius: 20px;
+            border-radius: 15px;
+            width: 100%;
+            box-sizing: border-box;
         }}
         .header-title {{
-            font-size: 2.5em;
+            font-size: 2em;
             font-family: 'Trebuchet MS', sans-serif;
             font-weight: bold;
-            margin-bottom: 10px;
+            margin-bottom: 5px;
         }}
         .header-subtitle {{
-            font-size: 1.5em;
+            font-size: 1.2em;
             font-family: 'Trebuchet MS', sans-serif;
         }}
         .sidebar .sidebar-content {{
@@ -218,56 +212,73 @@ st.markdown(f"""
         .stButton>button {{
             background-color: #ff5722;
             color: white;
-            border-radius: 10px;
+            border-radius: 8px;
             font-weight: bold;
+            padding: 8px 16px; /* Added padding for better touch targets */
         }}
         .stTextInput>div>div>input {{
             border-radius: 5px;
             border: 2px solid #ff5722;
+            padding: 8px; /* Added padding for better touch targets */
         }}
         .stDataFrame>div {{
             background-color: #ffffff;
             border: 2px solid #ff5722;
-            border-radius: 10px;
-            color: #333333; /* Ensure text color is dark gray */
+            border-radius: 8px;
+            color: #333333;
+            box-sizing: border-box;
         }}
         @media (prefers-color-scheme: dark) {{
             body {{
-                background-color: #1a1a1a; /* Dark background color */
-                color: #f5f5f5; /* Light text color for dark mode */
+                background-color: #1a1a1a;
+                color: #f5f5f5;
             }}
             .header-container {{
-                color: #f5f5f5; /* Light text in header for dark mode */
+                color: #f5f5f5;
             }}
             .sidebar .sidebar-content {{
-                background-color: #333333; /* Dark sidebar background */
+                background-color: #333333;
             }}
             .stButton>button {{
-                background-color: #ff6f61; /* Slightly brighter button for dark mode */
-                color: #f5f5f5; /* Light button text */
+                background-color: #ff6f61;
+                color: #f5f5f5;
             }}
             .stTextInput>div>div>input {{
-                background-color: #333333; /* Dark input background */
-                color: #f5f5f5; /* Light input text */
+                background-color: #333333;
+                color: #f5f5f5;
             }}
             .stDataFrame>div {{
-                background-color: #2e2e2e; /* Dark DataFrame background */
-                color: #f5f5f5; /* Light DataFrame text */
+                background-color: #2e2e2e;
+                color: #f5f5f5;
             }}
             .stDataFrame>div .dataframe-row {{
-                background-color: #333333 !important; /* Darker row background */
-                color: #f5f5f5 !important; /* Light row text */
+                background-color: #333333 !important;
+                color: #f5f5f5 !important;
             }}
         }}
-        /* Ensure visibility on small screens */
-        @media only screen and (max-width: 600px) {{
+        @media (max-width: 600px) {{
+            .header-container {{
+                padding: 10px;
+            }}
+            .header-title {{
+                font-size: 1.5em;
+            }}
+            .header-subtitle {{
+                font-size: 1em;
+            }}
+            .stButton>button {{
+                padding: 6px 12px;
+            }}
+            .stTextInput>div>div>input {{
+                padding: 6px;
+            }}
             .stDataFrame>div {{
-                color: #f5f5f5 !important; /* Ensure light text on mobile in dark mode */
-                background-color: #2e2e2e !important; /* Darker background for visibility */
+                border: none;
+                box-shadow: none;
+                border-radius: 0;
             }}
             .stDataFrame>div .dataframe-row {{
-                color: #f5f5f5 !important; /* Ensure light text on mobile in dark mode */
-                background-color: #333333 !important; /* Darker row background */
+                padding: 8px;
             }}
         }}
     </style>
@@ -296,7 +307,7 @@ with col2:
 
 # Common Search Box
 def render_search_box():
-    search_term = st.text_input("Search Item Description", key="search_box_unique_key")
+    search_term = st.text_input("Search Item Description", "")
     if search_term:
         files = list_files()
         if files:
@@ -312,7 +323,6 @@ def render_search_box():
         else:
             st.write("No files available. Please upload a file via the Admin Panel.")
     return search_term
-
 
 
 # Main Application Logic
