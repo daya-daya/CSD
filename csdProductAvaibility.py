@@ -58,6 +58,17 @@ def load_data(file_path):
             st.error(f"Unsupported file format: {file_path}")
             return None
 
+        # Optionally display the first few rows of the data for debugging
+        st.write(f"File loaded successfully: {file_path}")
+        st.write(data.head())
+
+        return data
+
+    except Exception as e:
+        st.error(f"Error loading file {os.path.basename(file_path)}: {e}")
+        return None
+
+
       #  st.write(f"File loaded successfully: {file_path}")
         return data
 
