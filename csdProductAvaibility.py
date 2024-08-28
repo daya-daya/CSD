@@ -30,16 +30,15 @@ def save_uploaded_file(uploaded_file):
         delete_uploaded_file(file)
 
     # Now save the new uploaded file
+    file_name, file_extension = os.path.splitext(uploaded_file.name)
+    if file_extension.lower() not in ['.xlsx', '.xls']:
+        st.error("Unsupported file extension. Please upload an Excel file.")
+        return None
+
     file_path = os.path.join(UPLOAD_DIR, uploaded_file.name)
     with open(file_path, "wb") as f:
         f.write(uploaded_file.getbuffer())
     return file_path
-
-
-def delete_uploaded_file(file_name):
-    file_path = os.path.join(UPLOAD_DIR, file_name)
-    if os.path.exists(file_path):
-        os.remove(file_path)
 
 
 def list_files():
