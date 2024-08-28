@@ -396,3 +396,64 @@ else:
 
     else:
         st.write("No files available. Please upload a file via the Admin Panel.")
+# Include this in your Streamlit app to add a responsive footer with a "Contact Us" heading
+
+st.markdown("""
+    <style>
+        /* Footer styling */
+        .footer-container {
+            background-color: #4caf50;
+            color: white;
+            padding: 20px;
+            text-align: center;
+            border-top: 2px solid #333333;
+        }
+        .footer-heading {
+            font-size: 24px;
+            font-weight: bold;
+            margin-bottom: 10px;
+            color: white; /* Highlight color */
+        }
+        .footer-content {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+        .footer-content a {
+            color: white;
+            margin: 0 15px;
+            text-decoration: none;
+            font-size: 24px;
+            transition: color 0.3s;
+        }
+        .footer-content a:hover {
+            color: #ff5722;
+        }
+        /* Responsive design */
+        @media (max-width: 600px) {
+            .footer-heading {
+                font-size: 20px;
+            }
+            .footer-content a {
+                font-size: 20px;
+                margin: 0 10px;
+            }
+        }
+    </style>
+
+    <div class="footer-container">
+        <div class="footer-heading">Contact Us</div>
+        <div class="footer-content">
+            <a href="https://chat.whatsapp.com/JjZTkVRJ9cVJ0yCkvlaROx" target="_blank">
+                <i class="fab fa-whatsapp"></i>
+            </a>
+            <a href="mailto:csd.prtc@gmail.com">
+                <i class="fas fa-envelope"></i>
+            </a>
+        </div>
+    </div>
+""", unsafe_allow_html=True)
+
+# Make sure to import Font Awesome in the header or use the existing inclusion
+st.markdown('<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">', unsafe_allow_html=True)
