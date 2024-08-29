@@ -312,9 +312,9 @@ with col2:
         st.session_state.page = "demand"
 
 
-def render_search_box(search_box_key):
-    # Assign a unique key to the st.text_input widget using the passed search_box_key
-    search_term = st.text_input("Search Item Description", "", key=search_box_key)
+def render_search_box():
+    # Assign a unique key to the st.text_input widget
+    search_term = st.text_input("Search Item Description", "", key="unique_search_key_1")
     
     if search_term:
         files = list_files()
@@ -332,6 +332,7 @@ def render_search_box(search_box_key):
             st.write("No files available. Please upload a file via the Admin Panel.")
     
     return search_term
+
 if 'file_path' in st.session_state:
     st.write("Welcome to the CSD PRTC!")
     files = list_files()
