@@ -15,14 +15,11 @@ DEMAND_DIR = "Demand_stock"
 os.makedirs(UPLOAD_DIR, exist_ok=True)
 os.makedirs(DEMAND_DIR, exist_ok=True)
 
-
 def remove_extension(file_name):
     return os.path.splitext(file_name)[0]
 
-
 def authenticate(username, password):
     return username == ADMIN_USERNAME and password == ADMIN_PASSWORD
-
 
 def save_uploaded_file(uploaded_file):
     # Delete all existing files in the directory before saving the new one
@@ -35,16 +32,13 @@ def save_uploaded_file(uploaded_file):
         f.write(uploaded_file.getbuffer())
     return file_path
 
-
 def delete_uploaded_file(file_name):
     file_path = os.path.join(UPLOAD_DIR, file_name)
     if os.path.exists(file_path):
         os.remove(file_path)
 
-
 def list_files():
     return os.listdir(UPLOAD_DIR)
-
 
 def load_data(file):
     try:
@@ -59,7 +53,6 @@ def load_data(file):
         st.error(f"Error loading file {os.path.basename(file)}: {e}")
         return None
     return data
-
 
 def process_data(data):
     required_columns = ['Index No', 'Item Description', 'RRATE', 'Closing']
@@ -87,20 +80,16 @@ def process_data(data):
 
     return data
 
-
-
 def search_data(data, search_term):
     if search_term:
         pattern = f"{search_term}"
         return data[data['Item Description'].str.contains(pattern, case=False, na=False, regex=True)]
     return data
 
-
 def color_banded_rows(row):
     return [
         'background-color: #f9f5e3; color: #333333' if row.name % 2 == 0 else 'background-color: #ffffff; color: #333333'] * len(
         row)
-
 
 def save_demand_data(data):
     today = datetime.now()
@@ -116,8 +105,6 @@ def save_demand_data(data):
 
     data.to_excel(file_path, index=False, engine='openpyxl')
     st.success(f"Demand data saved to {file_path}")
-
-
 
 def render_demand_form():
     with st.form(key='demand_form'):
@@ -264,7 +251,6 @@ with col2:
     if st.button("Demand"):
         st.session_state.page = "demand"
 
-
 # Common Search Box
 def render_search_box():
     search_term = st.text_input("Search Item Description", "")
@@ -283,7 +269,6 @@ def render_search_box():
         else:
             st.write("No files available. Please upload a file via the Admin Panel.")
     return search_term
-
 
 # Main Application Logic
 if st.session_state.page == "admin":
@@ -366,8 +351,8 @@ else:
 
     else:
         st.write("No files available. Please upload a file via the Admin Panel.")
-# Include this in your Streamlit app to add a responsive footer with a "Contact Us" heading
 
+# Footer
 st.markdown("""
     <style>
         /* Footer styling */
@@ -424,5 +409,6 @@ st.markdown("""
         </div>
     </div>
 """, unsafe_allow_html=True)
+
 # Make sure to import Font Awesome in the header or use the existing inclusion
 st.markdown('<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">', unsafe_allow_html=True)
