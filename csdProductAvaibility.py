@@ -313,7 +313,9 @@ with col2:
 
 
 def render_search_box():
-    search_term = st.text_input("Search Item Description", "", key="search_box_1")
+    # Assign a unique key to the st.text_input widget
+    search_term = st.text_input("Search Item Description", "", key="unique_search_key_1")
+    
     if search_term:
         files = list_files()
         if files:
@@ -328,7 +330,9 @@ def render_search_box():
                 st.write("No matching items found.")
         else:
             st.write("No files available. Please upload a file via the Admin Panel.")
+    
     return search_term
+
 
 
 
