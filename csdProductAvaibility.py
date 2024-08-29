@@ -60,9 +60,13 @@ def load_data(file_path):
 
         return data
 
+    except ImportError as e:
+        st.error(f"Error: {e}. Please ensure that the required libraries are installed.")
+        return None
     except Exception as e:
         st.error(f"Error loading file {os.path.basename(file_path)}: {e}")
         return None
+
 
 
 def process_data(data):
