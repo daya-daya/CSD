@@ -366,3 +366,21 @@ else:
 
     else:
         st.write("No files available. Please upload a file via the Admin Panel.")
+st.markdown("""
+    <style>
+        .footer {
+            position: fixed;
+            bottom: 0;
+            width: 100%;
+            background-color: #333;
+            color: white;
+            text-align: center;
+            padding: 10px;
+            font-size: 14px;
+            z-index: 1000; /* Ensure it stays on top */
+        }
+    </style>
+    <div class="footer">
+        <p>© 2024 UNIT RUN CANTEEN. All Rights Reserved.</p>
+    </div>
+""", unsafe_allow_html=True)
