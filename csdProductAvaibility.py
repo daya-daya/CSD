@@ -426,7 +426,6 @@ st.markdown("""
 """, unsafe_allow_html=True)
 # Make sure to import Font Awesome in the header or use the existing inclusion
 st.markdown('<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">', unsafe_allow_html=True)
-
 # Ensure the footer is the last thing rendered
 st.write("Footer should appear below this.")
 # Make sure to import Font Awesome in the header or use the existing inclusion
