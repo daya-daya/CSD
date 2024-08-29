@@ -1,7 +1,5 @@
 import streamlit as st
 import pandas as pd
-import openpyxl
-import xlrd
 import os
 from datetime import datetime
 
@@ -32,8 +30,7 @@ def save_uploaded_file(uploaded_file):
         delete_uploaded_file(file)
 
     # Now save the new uploaded file
-     new_file_name = f"CANTEEN STOCK SUMMARY {uploaded_file.name}"
-    file_path = os.path.join(UPLOAD_DIR, new_file_name)
+    file_path = os.path.join(UPLOAD_DIR, uploaded_file.name)
     with open(file_path, "wb") as f:
         f.write(uploaded_file.getbuffer())
     return file_path
@@ -49,27 +46,19 @@ def list_files():
     return os.listdir(UPLOAD_DIR)
 
 
-def load_data(file_path):
-    """Load Excel data from the given file path."""
+def load_data(file):
     try:
-        # Determine the file extension and load the Excel file accordingly
-        if file_path.endswith('.xlsx'):
-            data = pd.read_excel(file_path, engine='openpyxl')
-        elif file_path.endswith('.xls'):
-            data = pd.read_excel(file_path, engine='xlrd')
+        if file.endswith('.xlsx'):
+            data = pd.read_excel(file, engine='openpyxl')
+        elif file.endswith('.xls'):
+            data = pd.read_excel(file, engine='xlrd')
         else:
-            st.error(f"Unsupported file format: {file_path}")
+            st.error(f"Unsupported file format: {file}")
             return None
-
-        return data
-
-    except ImportError as e:
-        st.error(f"Error: {e}. Please ensure that the required libraries are installed.")
-        return None
     except Exception as e:
-        st.error(f"Error loading file {os.path.basename(file_path)}: {e}")
+        st.error(f"Error loading file {os.path.basename(file)}: {e}")
         return None
-
+    return data
 
 
 def process_data(data):
@@ -78,36 +67,26 @@ def process_data(data):
         st.error(f"Missing required columns in data.")
         return pd.DataFrame()  # Return empty DataFrame
 
-    # Select and rename columns
+    # Filter out rows where all the required columns are null or zero
+    data = data[~(data[required_columns].isnull().all(axis=1) | (data[required_columns] == 0).all(axis=1))]
+
     data = data[required_columns]
     data = data.rename(columns={'RRATE': 'Price'})
 
-    # Convert price to numeric and format
+    data.reset_index(drop=True, inplace=True)
+    data.index += 1
+    data.index.name = 'S.No'
+    data.reset_index(inplace=True)
+
     data['Price'] = pd.to_numeric(data['Price'], errors='coerce')
     data['Price'] = data['Price'].apply(lambda x: f"{x:.2f}" if pd.notnull(x) else '0.00')
 
-    # Create 'Available' column based on 'Closing' stock
     data['Available'] = data['Closing'].apply(lambda x: 'Yes' if pd.notnull(x) and x != 0 else 'No')
 
-    # Drop 'Closing' column as it's no longer needed
     data = data.drop(columns=['Closing'])
 
-    # Filter out rows where any of the critical columns are invalid or empty
-    filtered_data = data.dropna(subset=['Index No', 'Item Description', 'Price', 'Available'])
+    return data
 
-    # Further filter to ensure 'Price' and 'Available' are valid
-    filtered_data = filtered_data[filtered_data['Price'] != '0.00']
-    filtered_data = filtered_data[filtered_data['Available'] == 'Yes']
-
-    # Reset the index to create a sequential S.No column
-    filtered_data.reset_index(drop=True, inplace=True)
-    filtered_data.index += 1
-    filtered_data.index.name = 'S.No'
-
-    # Move index to a column and reset index
-    filtered_data = filtered_data.reset_index()
-
-    return filtered_data
 
 
 def search_data(data, search_term):
@@ -137,6 +116,7 @@ def save_demand_data(data):
 
     data.to_excel(file_path, index=False, engine='openpyxl')
     st.success(f"Demand data saved to {file_path}")
+
 
 
 def render_demand_form():
@@ -171,7 +151,6 @@ def render_demand_form():
 
             save_demand_data(data)
 
-
 # Application Logic
 st.markdown("""
     <marquee behavior="scroll" direction="left" scrollamount="8" style="color:red;font-weight:bold;background-color:yellow">
@@ -181,32 +160,23 @@ st.markdown("""
     </marquee>
 """, unsafe_allow_html=True)
 
-
 st.markdown(f"""
     <style>
-        body {{
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            font-family: 'Arial', sans-serif;
-        }}
         .header-container {{
            background-image: linear-gradient(to right, #4caf50, #4caf50);
-            padding: 15px;
+            padding: 20px;
             text-align: center;
             color: white;
-            border-radius: 15px;
-            width: 100%;
-            box-sizing: border-box;
+            border-radius: 20px;
         }}
         .header-title {{
-            font-size: 2em;
+            font-size: 2.5em;
             font-family: 'Trebuchet MS', sans-serif;
             font-weight: bold;
-            margin-bottom: 5px;
+            margin-bottom: 10px;
         }}
         .header-subtitle {{
-            font-size: 1.2em;
+            font-size: 1.5em;
             font-family: 'Trebuchet MS', sans-serif;
         }}
         .sidebar .sidebar-content {{
@@ -219,73 +189,56 @@ st.markdown(f"""
         .stButton>button {{
             background-color: #ff5722;
             color: white;
-            border-radius: 8px;
+            border-radius: 10px;
             font-weight: bold;
-            padding: 8px 16px; /* Added padding for better touch targets */
         }}
         .stTextInput>div>div>input {{
             border-radius: 5px;
             border: 2px solid #ff5722;
-            padding: 8px; /* Added padding for better touch targets */
         }}
         .stDataFrame>div {{
             background-color: #ffffff;
             border: 2px solid #ff5722;
-            border-radius: 8px;
-            color: #333333;
-            box-sizing: border-box;
+            border-radius: 10px;
+            color: #333333; /* Ensure text color is dark gray */
         }}
         @media (prefers-color-scheme: dark) {{
             body {{
-                background-color: #1a1a1a;
-                color: #f5f5f5;
+                background-color: #1a1a1a; /* Dark background color */
+                color: #f5f5f5; /* Light text color for dark mode */
             }}
             .header-container {{
-                color: #f5f5f5;
+                color: #f5f5f5; /* Light text in header for dark mode */
             }}
             .sidebar .sidebar-content {{
-                background-color: #333333;
+                background-color: #333333; /* Dark sidebar background */
             }}
             .stButton>button {{
-                background-color: #ff6f61;
-                color: #f5f5f5;
+                background-color: #ff6f61; /* Slightly brighter button for dark mode */
+                color: #f5f5f5; /* Light button text */
             }}
             .stTextInput>div>div>input {{
-                background-color: #333333;
-                color: #f5f5f5;
+                background-color: #333333; /* Dark input background */
+                color: #f5f5f5; /* Light input text */
             }}
             .stDataFrame>div {{
-                background-color: #2e2e2e;
-                color: #f5f5f5;
+                background-color: #2e2e2e; /* Dark DataFrame background */
+                color: #f5f5f5; /* Light DataFrame text */
             }}
             .stDataFrame>div .dataframe-row {{
-                background-color: #333333 !important;
-                color: #f5f5f5 !important;
+                background-color: #333333 !important; /* Darker row background */
+                color: #f5f5f5 !important; /* Light row text */
             }}
         }}
-        @media (max-width: 600px) {{
-            .header-container {{
-                padding: 10px;
-            }}
-            .header-title {{
-                font-size: 1.5em;
-            }}
-            .header-subtitle {{
-                font-size: 1em;
-            }}
-            .stButton>button {{
-                padding: 6px 12px;
-            }}
-            .stTextInput>div>div>input {{
-                padding: 6px;
-            }}
+        /* Ensure visibility on small screens */
+        @media only screen and (max-width: 600px) {{
             .stDataFrame>div {{
-                border: none;
-                box-shadow: none;
-                border-radius: 0;
+                color: #f5f5f5 !important; /* Ensure light text on mobile in dark mode */
+                background-color: #2e2e2e !important; /* Darker background for visibility */
             }}
             .stDataFrame>div .dataframe-row {{
-                padding: 8px;
+                color: #f5f5f5 !important; /* Ensure light text on mobile in dark mode */
+                background-color: #333333 !important; /* Darker row background */
             }}
         }}
     </style>
@@ -312,10 +265,9 @@ with col2:
         st.session_state.page = "demand"
 
 
+# Common Search Box
 def render_search_box():
-    # Assign a unique key to the st.text_input widget
-    search_term = st.text_input("Search Item Description", "", key="unique_search_key_1")
-    
+    search_term = st.text_input("Search Item Description", "")
     if search_term:
         files = list_files()
         if files:
@@ -330,31 +282,7 @@ def render_search_box():
                 st.write("No matching items found.")
         else:
             st.write("No files available. Please upload a file via the Admin Panel.")
-    
     return search_term
-
-if 'file_path' in st.session_state:
-    st.write("Welcome to the CSD PRTC!")
-    files = list_files()
-
-    if files:
-        render_search_box("unique_search_key_1")  # First call with a unique key
-
-        for file in files:
-            st.write(f"### {remove_extension(file)}")  # Display the file name without extension
-            data = load_data(os.path.join(UPLOAD_DIR, file))
-            if data is not None:
-                processed_data = process_data(data)
-                styled_data = processed_data.style.apply(color_banded_rows, axis=1)
-                st.dataframe(styled_data, use_container_width=True, hide_index=True)
-
-    else:
-        st.write("No files available. Please upload a file via the Admin Panel.")
-    processed_data = process_data(load_data(st.session_state.file_path))
-    render_search_box("unique_search_key_2")  # Second call with another unique key
-
-
-
 
 
 # Main Application Logic
@@ -438,64 +366,3 @@ else:
 
     else:
         st.write("No files available. Please upload a file via the Admin Panel.")
-# Include this in your Streamlit app to add a responsive footer with a "Contact Us" heading
-
-st.markdown("""
-    <style>
-        /* Footer styling */
-        .footer-container {
-            background-color: #4caf50;
-            color: white;
-            padding: 20px;
-            text-align: center;
-            border-top: 2px solid #333333;
-        }
-        .footer-heading {
-            font-size: 24px;
-            font-weight: bold;
-            margin-bottom: 10px;
-            color: white; /* Highlight color */
-        }
-        .footer-content {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            flex-wrap: wrap;
-        }
-        .footer-content a {
-            color: white;
-            margin: 0 15px;
-            text-decoration: none;
-            font-size: 24px;
-            transition: color 0.3s;
-        }
-        .footer-content a:hover {
-            color: #ff5722;
-        }
-        /* Responsive design */
-        @media (max-width: 600px) {
-            .footer-heading {
-                font-size: 20px;
-            }
-            .footer-content a {
-                font-size: 20px;
-                margin: 0 10px;
-            }
-        }
-    </style>
-
-    <div class="footer-container">
-        <div class="footer-heading">Contact Us</div>
-        <div class="footer-content">
-            <a href="https://chat.whatsapp.com/JjZTkVRJ9cVJ0yCkvlaROx" target="_blank">
-                <i class="fab fa-whatsapp"></i>
-            </a>
-            <a href="mailto:csd.prtc@gmail.com">
-                <i class="fas fa-envelope"></i>
-            </a>
-        </div>
-    </div>
-""", unsafe_allow_html=True)
-
-# Make sure to import Font Awesome in the header or use the existing inclusion
-st.markdown('<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">', unsafe_allow_html=True)
