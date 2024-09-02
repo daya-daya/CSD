@@ -2,7 +2,7 @@ import pandas as pd
 import os
 from datetime import datetime
 
-LOG_DIR = "search_log"
+LOG_DIR = "search_log/search_log"
 if not os.path.exists(LOG_DIR):
     os.makedirs(LOG_DIR)
 
