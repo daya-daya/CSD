@@ -17,7 +17,7 @@ def log_search(search_term):
 
     if os.path.exists(log_file):
         # Load existing data
-        existing_df = pd.read_excel(log_file, engine='openpyxl')
+        existing_df = pd.read_excel(log_file, engine='xlrd')
 
         # Check if search term already exists
         if search_term in existing_df["Search Term"].values:
