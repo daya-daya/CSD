@@ -1,7 +1,6 @@
 import pandas as pd
 import os
 from datetime import datetime
-import subprocess
 
 LOG_DIR = "search_log/search_log"
 
@@ -58,6 +57,12 @@ def log_search(search_term):
             log_df.to_excel(log_file, index=False, engine='openpyxl')
             print(f"Created new log file {log_file} with initial data")
 
+        # Confirm the file exists
+        if os.path.isfile(log_file):
+            print(f"Log file confirmed: {log_file}")
+        else:
+            print(f"Log file does not exist: {log_file}")
+
         # Add, commit, and push changes to Git
         git_add_commit_push()
 
@@ -71,18 +76,28 @@ def search_nlp_correction(search_term):
 
 def git_add_commit_push():
     try:
+        # Check if we are in a git repository
+        subprocess.run(["git", "status"], check=True)
+        print("In a Git repository.")
+
         # Add files to the staging area
-        subprocess.run(["git", "add", "."], check=True)
-        print("Staged changes for commit.")
+        result = subprocess.run(["git", "add", "."], capture_output=True, text=True)
+        print(f"Git add output: {result.stdout}")
+        if result.returncode != 0:
+            print(f"Git add error: {result.stderr}")
 
         # Commit the changes
         commit_message = "Update search log"
-        subprocess.run(["git", "commit", "-m", commit_message], check=True)
-        print(f"Committed changes with message: '{commit_message}'")
+        result = subprocess.run(["git", "commit", "-m", commit_message], capture_output=True, text=True)
+        print(f"Git commit output: {result.stdout}")
+        if result.returncode != 0:
+            print(f"Git commit error: {result.stderr}")
 
         # Push the changes to the remote repository
-        subprocess.run(["git", "push"], check=True)
-        print("Pushed changes to the remote repository.")
+        result = subprocess.run(["git", "push"], capture_output=True, text=True)
+        print(f"Git push output: {result.stdout}")
+        if result.returncode != 0:
+            print(f"Git push error: {result.stderr}")
 
     except subprocess.CalledProcessError as e:
         print(f"Git command failed: {e}")
