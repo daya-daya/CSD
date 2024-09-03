@@ -11,13 +11,13 @@ def log_search(search_term):
     if not search_term.strip():
         return  # Do nothing if the search_term is blank
 
-    log_file = os.path.join(LOG_DIR, "search_log.xls")
+    log_file = os.path.join(LOG_DIR, "search_log.xlsx")
     search_term = search_nlp_correction(search_term)
     current_time = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
 
     if os.path.exists(log_file):
         # Load existing data
-        existing_df = pd.read_excel(log_file, engine='xlrd')
+        existing_df = pd.read_excel(log_file, engine='openpyxl')
 
         # Check if search term already exists
         if search_term in existing_df["Search Term"].values:
@@ -36,7 +36,7 @@ def log_search(search_term):
             existing_df = pd.concat([existing_df, new_df], ignore_index=True)
 
         # Save the updated data back to the file
-        existing_df.to_excel(log_file, index=False, engine='xlrd')
+        existing_df.to_excel(log_file, index=False, engine='openpyxl')
     else:
         # Create new log file with initial data
         search_data = {
@@ -45,7 +45,7 @@ def log_search(search_term):
             "Last Searched": [current_time]
         }
         log_df = pd.DataFrame(search_data)
-        log_df.to_excel(log_file, index=False, engine='xlrd')
+        log_df.to_excel(log_file, index=False, engine='openpyxl')
 
 def search_nlp_correction(search_term):
     # Placeholder for NLP-based search term correction
