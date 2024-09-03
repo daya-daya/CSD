@@ -2,40 +2,51 @@ import pandas as pd
 import os
 from datetime import datetime
 
-# Directory to store search logs
-SEARCH_LOG_DIR = "search_log"
-os.makedirs(SEARCH_LOG_DIR, exist_ok=True)
+LOG_DIR = "search_log"
+if not os.path.exists(LOG_DIR):
+    os.makedirs(LOG_DIR)
 
 def log_search(search_term):
-    log_file = os.path.join(SEARCH_LOG_DIR, "search_log.xlsx")
+    # Check if the search_term is blank or contains only whitespace
+    if not search_term.strip():
+        return  # Do nothing if the search_term is blank
 
-    # Get the current date and time
-    current_time = datetime.now()
-
-    # Create a DataFrame for the new log entry
-    new_log = pd.DataFrame({
-        "Date": [current_time.strftime("%Y-%m-%d")],
-        "Time": [current_time.strftime("%H:%M:%S")],
-        "Search Term": [search_term],
-        "Count": [1]
-    })
+    log_file = os.path.join(LOG_DIR, "search_log.xlsx")
+    search_term = search_nlp_correction(search_term)
+    current_time = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
 
     if os.path.exists(log_file):
-        # If the log file exists, load it and append the new log
-        existing_logs = pd.read_excel(log_file, engine='openpyxl')
+        # Load existing data
+        existing_df = pd.read_excel(log_file, engine='openpyxl')
 
-        # Check if the search term already exists for the current date
-        match = existing_logs[(existing_logs['Search Term'] == search_term) & (existing_logs['Date'] == current_time.strftime("%Y-%m-%d"))]
-
-        if not match.empty:
-            # If it exists, increment the count
-            existing_logs.loc[match.index, 'Count'] += 1
+        # Check if search term already exists
+        if search_term in existing_df["Search Term"].values:
+            # Update existing entry
+            index = existing_df[existing_df["Search Term"] == search_term].index[0]
+            existing_df.at[index, "Count"] += 1
+            existing_df.at[index, "Last Searched"] = current_time
         else:
-            # Otherwise, append the new log entry
-            existing_logs = pd.concat([existing_logs, new_log], ignore_index=True)
+            # Add new entry
+            search_data = {
+                "Search Term": [search_term],
+                "Count": [1],
+                "Last Searched": [current_time]
+            }
+            new_df = pd.DataFrame(search_data)
+            existing_df = pd.concat([existing_df, new_df], ignore_index=True)
 
-        # Save the updated log back to the file
-        existing_logs.to_excel(log_file, index=False, engine='openpyxl')
+        # Save the updated data back to the file
+        existing_df.to_excel(log_file, index=False, engine='openpyxl')
     else:
-        # If the log file doesn't exist, create it with the new log entry
-        new_log.to_excel(log_file, index=False, engine='openpyxl')
+        # Create new log file with initial data
+        search_data = {
+            "Search Term": [search_term],
+            "Count": [1],
+            "Last Searched": [current_time]
+        }
+        log_df = pd.DataFrame(search_data)
+        log_df.to_excel(log_file, index=False, engine='openpyxl')
+
+def search_nlp_correction(search_term):
+    # Placeholder for NLP-based search term correction
+    return search_term
