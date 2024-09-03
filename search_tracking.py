@@ -71,28 +71,18 @@ def search_nlp_correction(search_term):
 
 def git_add_commit_push():
     try:
-        # Check if we are in a git repository
-        subprocess.run(["git", "status"], check=True)
-        print("In a Git repository.")
-
         # Add files to the staging area
-        result = subprocess.run(["git", "add", "."], capture_output=True, text=True)
-        print(f"Git add output: {result.stdout}")
-        if result.returncode != 0:
-            print(f"Git add error: {result.stderr}")
+        subprocess.run(["git", "add", "."], check=True)
+        print("Staged changes for commit.")
 
         # Commit the changes
         commit_message = "Update search log"
-        result = subprocess.run(["git", "commit", "-m", commit_message], capture_output=True, text=True)
-        print(f"Git commit output: {result.stdout}")
-        if result.returncode != 0:
-            print(f"Git commit error: {result.stderr}")
+        subprocess.run(["git", "commit", "-m", commit_message], check=True)
+        print(f"Committed changes with message: '{commit_message}'")
 
         # Push the changes to the remote repository
-        result = subprocess.run(["git", "push"], capture_output=True, text=True)
-        print(f"Git push output: {result.stdout}")
-        if result.returncode != 0:
-            print(f"Git push error: {result.stderr}")
+        subprocess.run(["git", "push"], check=True)
+        print("Pushed changes to the remote repository.")
 
     except subprocess.CalledProcessError as e:
         print(f"Git command failed: {e}")
