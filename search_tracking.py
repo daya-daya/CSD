@@ -2,6 +2,7 @@ import pandas as pd
 import os
 from datetime import datetime
 from zipfile import BadZipFile
+import subprocess
 
 LOG_DIR = "search_log"
 if not os.path.exists(LOG_DIR):
@@ -19,8 +20,6 @@ def log_search(search_term):
         if os.path.exists(log_file):
             # Load existing data
             existing_df = pd.read_excel(log_file, engine='openpyxl')
-            print("Loaded existing data:")
-            print(existing_df)
 
             # Check if search term already exists
             if search_term in existing_df["Search Term"].values:
@@ -40,7 +39,6 @@ def log_search(search_term):
 
             # Save the updated data back to the file
             existing_df.to_excel(log_file, index=False, engine='openpyxl')
-            print("Updated data saved to Excel.")
         else:
             # Create new log file with initial data
             search_data = {
@@ -50,12 +48,10 @@ def log_search(search_term):
             }
             log_df = pd.DataFrame(search_data)
             log_df.to_excel(log_file, index=False, engine='openpyxl')
-            print("New log file created and saved to Excel.")
     
     except BadZipFile as e:
         print(f"Error: {e}")
         # Handle the corrupted file scenario
-        # Optionally, you could delete the corrupted file and start fresh
         if os.path.exists(log_file):
             os.remove(log_file)
         # Create a new log file
@@ -66,11 +62,27 @@ def log_search(search_term):
         }
         log_df = pd.DataFrame(search_data)
         log_df.to_excel(log_file, index=False, engine='openpyxl')
-        print("New log file created after handling BadZipFile error.")
+
+    # Commit and push the updated Excel file to GitHub
+    commit_and_push(log_file)
 
 def search_nlp_correction(search_term):
     # Placeholder for NLP-based search term correction
     return search_term
+
+def commit_and_push(file_path):
+    try:
+        # Add the file to the staging area
+        subprocess.run(["git", "add", file_path], check=True)
+
+        # Commit the file with a message
+        subprocess.run(["git", "commit", "-m", f"Update search log: {file_path}"], check=True)
+
+        # Push the commit to the repository
+        subprocess.run(["git", "push"], check=True)
+        
+    except subprocess.CalledProcessError as e:
+        print(f"An error occurred during Git operations: {e}")
 
 # Example usage
 log_search("example search term")
