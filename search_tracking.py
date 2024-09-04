@@ -19,6 +19,8 @@ def log_search(search_term):
         if os.path.exists(log_file):
             # Load existing data
             existing_df = pd.read_excel(log_file, engine='openpyxl')
+            print("Loaded existing data:")
+            print(existing_df)
 
             # Check if search term already exists
             if search_term in existing_df["Search Term"].values:
@@ -38,6 +40,7 @@ def log_search(search_term):
 
             # Save the updated data back to the file
             existing_df.to_excel(log_file, index=False, engine='openpyxl')
+            print("Updated data saved to Excel.")
         else:
             # Create new log file with initial data
             search_data = {
@@ -47,6 +50,7 @@ def log_search(search_term):
             }
             log_df = pd.DataFrame(search_data)
             log_df.to_excel(log_file, index=False, engine='openpyxl')
+            print("New log file created and saved to Excel.")
     
     except BadZipFile as e:
         print(f"Error: {e}")
@@ -62,6 +66,7 @@ def log_search(search_term):
         }
         log_df = pd.DataFrame(search_data)
         log_df.to_excel(log_file, index=False, engine='openpyxl')
+        print("New log file created after handling BadZipFile error.")
 
 def search_nlp_correction(search_term):
     # Placeholder for NLP-based search term correction
