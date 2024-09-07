@@ -3,8 +3,8 @@ import pandas as pd
 import os
 from datetime import datetime
 from search_tracking import log_search, search_nlp_correction
-
 # Define your admin credentials (for simplicity, hard-coded here)
+
 ADMIN_USERNAME = "admin"
 ADMIN_PASSWORD = "Anildaya"
 
@@ -96,6 +96,7 @@ def process_data(data):
     return data
 
 
+
 def search_data(data, search_term):
     if search_term:
         pattern = f"{search_term}"
@@ -123,6 +124,7 @@ def save_demand_data(data):
 
     data.to_excel(file_path, index=False, engine='openpyxl')
     st.success(f"Demand data saved to {file_path}")
+
 
 
 def render_demand_form():
@@ -157,7 +159,6 @@ def render_demand_form():
 
             save_demand_data(data)
 
-
 # Application Logic
 st.markdown("""
     <marquee behavior="scroll" direction="left" scrollamount="8" style="color:red;font-weight:bold;background-color:yellow">
@@ -185,6 +186,68 @@ st.markdown(f"""
         .header-subtitle {{
             font-size: 1.5em;
             font-family: 'Trebuchet MS', sans-serif;
+        }}
+        .sidebar .sidebar-content {{
+            background-color: #3a6186;
+            color: white;
+        }}
+        .sidebar .block-container {{
+            padding: 1rem;
+        }}
+        .stButton>button {{
+            background-color: #ff5722;
+            color: white;
+            border-radius: 10px;
+            font-weight: bold;
+        }}
+        .stTextInput>div>div>input {{
+            border-radius: 5px;
+            border: 2px solid #ff5722;
+        }}
+        .stDataFrame>div {{
+            background-color: #ffffff;
+            border: 2px solid #ff5722;
+            border-radius: 10px;
+            color: #333333; /* Ensure text color is dark gray */
+        }}
+        @media (prefers-color-scheme: dark) {{
+            body {{
+                background-color: #1a1a1a; /* Dark background color */
+                color: #f5f5f5; /* Light text color for dark mode */
+            }}
+            .header-container {{
+                color: #f5f5f5; /* Light text in header for dark mode */
+            }}
+            .sidebar .sidebar-content {{
+                background-color: #333333; /* Dark sidebar background */
+            }}
+            .stButton>button {{
+                background-color: #ff6f61; /* Slightly brighter button for dark mode */
+                color: #f5f5f5; /* Light button text */
+            }}
+            .stTextInput>div>div>input {{
+                background-color: #333333; /* Dark input background */
+                color: #f5f5f5; /* Light input text */
+            }}
+            .stDataFrame>div {{
+                background-color: #2e2e2e; /* Dark DataFrame background */
+                color: #f5f5f5; /* Light DataFrame text */
+            }}
+            .stDataFrame>div .dataframe-row {{
+                background-color: #333333 !important; /* Darker row background */
+                color: #f5f5f5 !important; /* Light row text */
+            }}
+        }}
+        /* Ensure visibility on small screens */
+        @media only screen and (max-width: 600px) {{
+            .stDataFrame>div {{
+                color: #f5f5f5 !important; /* Ensure light text on mobile in dark mode */
+                background-color: #2e2e2e !important; /* Darker background for visibility */
+            }}
+            .stDataFrame>div .dataframe-row {{
+                color: #f5f5f5 !important; /* Ensure light text on mobile in dark mode */
+                background-color: #333333 !important; /* Darker row background */
+            }}
         }}
     </style>
 """, unsafe_allow_html=True)
@@ -216,7 +279,7 @@ def render_search_box():
     search_term = search_term.lower()
     corrected_search_term = search_nlp_correction(search_term)
 
-    # Log the search
+    #user_id = st.session_state.get("user_id", "anonymous")
     log_search(corrected_search_term)
     if search_term:
         files = list_files()
@@ -247,30 +310,132 @@ if st.session_state.page == "admin":
 
         if st.sidebar.button("Login"):
             if authenticate(username, password):
-                st.sidebar.success("Logged in successfully.")
                 st.session_state.logged_in = True
+                st.sidebar.success("Logged in successfully!")
             else:
-                st.sidebar.error("Invalid credentials.")
+                st.sidebar.error("Invalid username or password.")
     else:
-        st.write("Welcome to the Admin Panel!")
+        st.sidebar.header("Admin Panel")
 
-        uploaded_file = st.file_uploader("Upload File", type=["xls", "xlsx"])
+        st.sidebar.subheader("Upload File")
+        uploaded_file = st.sidebar.file_uploader("Upload your Excel file", type=["xlsx", "xls"])
 
         if uploaded_file is not None:
-            save_uploaded_file(uploaded_file)
-            st.success("File uploaded and renamed successfully!")
+            file_path = save_uploaded_file(uploaded_file)
+            st.session_state.file_path = file_path
+            st.sidebar.success(f"File uploaded: {uploaded_file.name}")
 
-        st.write("Uploaded Files:")
+        st.sidebar.subheader("Delete File")
         files = list_files()
         if files:
-            for file in files:
-                st.write(file)
+            file_to_delete = st.sidebar.selectbox("Select file to delete", files)
 
-        if st.button("Logout"):
-            st.session_state.logged_in = False
+            if st.sidebar.button("Delete File"):
+                delete_uploaded_file(file_to_delete)
+                st.sidebar.success(f"File deleted: {file_to_delete}")
+                if 'file_path' in st.session_state and file_to_delete == os.path.basename(st.session_state.file_path):
+                    st.session_state.pop('file_path', None)
+        else:
+            st.sidebar.write("No files to delete.")
+
+        # Show data if a file has been uploaded
+        if 'file_path' in st.session_state:
+            st.write("Welcome to the CSD PRTC!")
+            files = list_files()
+
+            if files:
+                render_search_box()
+
+                for file in files:
+                    st.write(f"### {remove_extension(file)}")  # Display the file name without extension
+                    data = load_data(os.path.join(UPLOAD_DIR, file))
+                    if data is not None:
+                        processed_data = process_data(data)
+                        styled_data = processed_data.style.apply(color_banded_rows, axis=1)
+                        st.dataframe(styled_data, use_container_width=True, hide_index=True)
+
+            else:
+                st.write("No files available. Please upload a file via the Admin Panel.")
+            processed_data = process_data(load_data(st.session_state.file_path))
+            render_search_box()
 
 elif st.session_state.page == "demand":
     render_demand_form()
 
 else:
-    render_search_box()
+    # Display data from the uploaded_files directory
+    files = list_files()
+
+    if files:
+        render_search_box()
+
+        for file in files:
+            st.write(f"### {remove_extension(file)}")  # Display the file name without extension
+            data = load_data(os.path.join(UPLOAD_DIR, file))
+            if data is not None:
+                processed_data = process_data(data)
+                styled_data = processed_data.style.apply(color_banded_rows, axis=1)
+                st.dataframe(styled_data, use_container_width=True, hide_index=True)
+
+    else:
+        st.write("No files available. Please upload a file via the Admin Panel.")
+# Include this in your Streamlit app to add a responsive footer with a "Contact Us" heading
+
+st.markdown("""
+    <style>
+        /* Footer styling */
+        .footer-container {
+            background-color: #4caf50;
+            color: white;
+            padding: 20px;
+            text-align: center;
+            border-top: 2px solid #333333;
+        }
+        .footer-heading {
+            font-size: 24px;
+            font-weight: bold;
+            margin-bottom: 10px;
+            color: white; /* Highlight color */
+        }
+        .footer-content {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+        .footer-content a {
+            color: white;
+            margin: 0 15px;
+            text-decoration: none;
+            font-size: 24px;
+            transition: color 0.3s;
+        }
+        .footer-content a:hover {
+            color: #ff5722;
+        }
+        /* Responsive design */
+        @media (max-width: 600px) {
+            .footer-heading {
+                font-size: 20px;
+            }
+            .footer-content a {
+                font-size: 20px;
+                margin: 0 10px;
+            }
+        }
+    </style>
+
+    <div class="footer-container">
+        <div class="footer-heading">Contact Us</div>
+        <div class="footer-content">
+            <a href="https://chat.whatsapp.com/JjZTkVRJ9cVJ0yCkvlaROx" target="_blank">
+                <i class="fab fa-whatsapp"></i>
+            </a>
+            <a href="mailto:csd.prtc@gmail.com">
+                <i class="fas fa-envelope"></i>
+            </a>
+        </div>
+    </div>
+""", unsafe_allow_html=True)
+# Make sure to import Font Awesome in the header or use the existing inclusion
+st.markdown('<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">', unsafe_allow_html=True)
