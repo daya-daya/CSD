@@ -15,6 +15,21 @@ DEMAND_DIR = "Demand_stock"
 # Ensure the directories exist
 os.makedirs(UPLOAD_DIR, exist_ok=True)
 os.makedirs(DEMAND_DIR, exist_ok=True)
+def download_search_log():
+    SEARCH_LOG_DIR = "search_log"
+    log_files = os.listdir(SEARCH_LOG_DIR)
+    if log_files:
+        for log_file in log_files:
+            file_path = os.path.join(SEARCH_LOG_DIR, log_file)
+            with open(file_path, "rb") as f:
+                st.download_button(
+                    label=f"Download {log_file}",
+                    data=f,
+                    file_name=log_file,
+                    mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+                )
+    else:
+        st.write("No search log data available to download.")
 
 
 def remove_extension(file_name):
@@ -323,7 +338,8 @@ if st.session_state.page == "admin":
                 st.sidebar.error("Invalid username or password.")
     else:
         st.sidebar.header("Admin Panel")
-
+        if st.button("Download Search Log"):
+            download_search_log()
         st.sidebar.subheader("Upload File")
         uploaded_file = st.sidebar.file_uploader("Upload your Excel file", type=["xlsx", "xls"])
 
@@ -331,7 +347,8 @@ if st.session_state.page == "admin":
             file_path = save_uploaded_file(uploaded_file)
             st.session_state.file_path = file_path
             st.sidebar.success(f"File uploaded: {uploaded_file.name}")
-
+            if st.button("Download Search Log"):
+                download_search_log()
         st.sidebar.subheader("Delete File")
         files = list_files()
         if files:
