@@ -237,4 +237,42 @@ st.markdown(f"""
                 color: #f5f5f5 !important; /* Light row text */
             }}
         }}
-        /*
+        /* Additional custom styles can be added here */
+    </style>
+""", unsafe_allow_html=True)
+
+st.sidebar.title("Admin Login")
+username = st.sidebar.text_input("Username")
+password = st.sidebar.text_input("Password", type="password")
+
+if st.sidebar.button("Login"):
+    if authenticate(username, password):
+        st.sidebar.success("Authenticated")
+        
+        # Admin functionality
+        st.sidebar.title("Admin Dashboard")
+        uploaded_file = st.file_uploader("Upload Excel File", type=['xlsx', 'xls'])
+        if uploaded_file:
+            file_path = save_uploaded_file(uploaded_file)
+            st.sidebar.success(f"File saved to {file_path}")
+
+            data = load_data(file_path)
+            if data is not None:
+                data = process_data(data)
+                st.write(data.style.apply(color_banded_rows, axis=1))
+                
+                search_term = st.text_input("Search Item")
+                filtered_data = search_data(data, search_term)
+                st.write(filtered_data.style.apply(color_banded_rows, axis=1))
+
+                # Save filtered data for demand
+                if st.button("Save Filtered Data"):
+                    save_demand_data(filtered_data)
+
+    else:
+        st.sidebar.error("Invalid username or password")
+else:
+    # General functionality for all users
+    st.title("Welcome to the Canteen")
+    render_demand_form()
+
