@@ -52,43 +52,35 @@ def log_search(search_term):
         log_df = pd.DataFrame(search_data)
         log_df.to_excel(log_file, index=False, engine='openpyxl')
 
-    # Schedule the download and delete process after 24 hours
-    download_and_delete_after_24_hours(log_file)
+    # Commit and push changes to Git after logging the search
+    commit_and_push(log_file)
 
 def search_nlp_correction(search_term):
     # Placeholder for NLP-based search term correction
     return search_term
 
-def download_and_delete_after_24_hours(log_file):
-    # Wait for 24 hours (86400 seconds)
-    sleep(86400)
-
-    # Create a timestamped filename for download
-    timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
-    download_path = os.path.join(DOWNLOAD_DIR, f"search_log_{timestamp}.xlsx")
-
-    # Copy the file to the download folder
-    shutil.copy(log_file, download_path)
-    print(f"File downloaded to {download_path}")
-
-    # Delete the file from Git
-    delete_file_from_git(log_file)
-
-def delete_file_from_git(file_path):
+def commit_and_push(file_path):
     try:
-        # Remove the file from the Git repository
-        subprocess.run(["git", "rm", file_path], check=True)
+        # Check the status of the file
+        print("Checking git status...")
+        subprocess.run(["git", "status"], check=True)
 
-        # Commit the change
-        subprocess.run(["git", "commit", "-m", f"Deleted file: {file_path}"], check=True)
+        # Add the file to the staging area
+        print(f"Adding {file_path} to git...")
+        subprocess.run(["git", "add", file_path], check=True)
 
-        # Push the commit
+        # Commit the file with a message
+        print(f"Committing {file_path} to git...")
+        subprocess.run(["git", "commit", "-m", f"Updated search log: {file_path}"], check=True)
+
+        # Push the commit to the repository
+        print(f"Pushing {file_path} to remote repository...")
         subprocess.run(["git", "push"], check=True)
-        
-        print(f"File {file_path} deleted from Git and committed.")
+
+        print("Changes pushed successfully!")
 
     except subprocess.CalledProcessError as e:
-        print(f"Error during Git operations: {e}")
+        print(f"An error occurred during Git operations: {e}")
 
 # Example usage
 log_search("example search term")
