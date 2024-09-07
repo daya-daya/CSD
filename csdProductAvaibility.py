@@ -2,7 +2,7 @@ import streamlit as st
 import pandas as pd
 import os
 from datetime import datetime
-from search_tracking import log_search, search_nlp_correction
+from search_tracking import log_search, search_nlp_correction, get_previous_searches
 # Define your admin credentials (for simplicity, hard-coded here)
 
 ADMIN_USERNAME = "admin"
@@ -275,18 +275,24 @@ with col2:
 
 # Common Search Box
 def render_search_box():
-    search_term = st.text_input("Search Item Description", "")
-    search_term = search_term.lower()
-    corrected_search_term = search_nlp_correction(search_term)
+    # Fetch previous searches
+    previous_searches = get_previous_searches()
 
-    #user_id = st.session_state.get("user_id", "anonymous")
-    log_search(corrected_search_term)
+    # Get the search term from the user
+    search_term = st.text_input("Search Item Description", "")
+
+    # Correct the search term based on previous searches
+    corrected_term = search_nlp_correction(search_term, previous_searches)
+
+    # Log the search and get updated search terms
+    updated_searches = log_search(corrected_term)
+
     if search_term:
-        files = list_files()
+        files = list_files()  # Implement list_files to get files in UPLOAD_DIR
         if files:
             all_data = pd.concat([process_data(load_data(os.path.join(UPLOAD_DIR, file))) for file in files if
                                   load_data(os.path.join(UPLOAD_DIR, file)) is not None], ignore_index=True)
-            result_data = search_data(all_data, search_term)
+            result_data = search_data(all_data, corrected_term)
 
             if not result_data.empty:
                 styled_data = result_data.style.apply(color_banded_rows, axis=1)
@@ -295,6 +301,7 @@ def render_search_box():
                 st.write("No matching items found.")
         else:
             st.write("No files available. Please upload a file via the Admin Panel.")
+
     return search_term
 
 
