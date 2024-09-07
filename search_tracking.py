@@ -1,11 +1,16 @@
 import pandas as pd
 import os
 from datetime import datetime
-import subprocess
+import git  # Import GitPython
 
+# Directory to store search logs
 LOG_DIR = "search_log"
 if not os.path.exists(LOG_DIR):
     os.makedirs(LOG_DIR)
+
+def search_nlp_correction(search_term):
+    # Placeholder for NLP-based search term correction
+    return search_term
 
 def log_search(search_term):
     # Check if the search_term is blank or contains only whitespace
@@ -19,8 +24,6 @@ def log_search(search_term):
     if os.path.exists(log_file):
         # Load existing data
         existing_df = pd.read_excel(log_file, engine='openpyxl')
-        print("Existing DataFrame:")
-        print(existing_df)
 
         # Check if search term already exists
         if search_term in existing_df["Search Term"].values:
@@ -40,8 +43,6 @@ def log_search(search_term):
 
         # Save the updated data back to the file
         existing_df.to_excel(log_file, index=False, engine='openpyxl')
-        print("Updated DataFrame:")
-        print(existing_df)
     else:
         # Create new log file with initial data
         search_data = {
@@ -51,30 +52,25 @@ def log_search(search_term):
         }
         log_df = pd.DataFrame(search_data)
         log_df.to_excel(log_file, index=False, engine='openpyxl')
-        print(f"Created new log file at {log_file}")
 
-    # Ensure the updated log file is tracked and pushed to GitHub
+    # Ensure the updated log file is tracked and pushed to Git
     commit_and_push_to_git(log_file)
-
-def search_nlp_correction(search_term):
-    # Placeholder for NLP-based search term correction
-    return search_term
 
 def commit_and_push_to_git(log_file):
     try:
-        # Stage the updated log file
-        subprocess.run(["git", "add", log_file], check=True)
-        print(f"Staged {log_file}")
+        repo = git.Repo(".")  # Open the current repository
+        repo.git.add(log_file)  # Stage the updated log file
 
-        # Commit the changes with a relevant message
-        subprocess.run(["git", "commit", "-m", "Update search_log.xlsx with new search term"], check=True)
-        print("Committed changes")
+        # Commit the changes
+        repo.index.commit("Update search_log.xlsx with new search term")
 
         # Push the changes to the repository
-        subprocess.run(["git", "push"], check=True)
-        print("Pushed changes to Git")
+        origin = repo.remote(name='origin')
+        origin.push()
+        
+        print("Successfully committed and pushed changes.")
 
-    except subprocess.CalledProcessError as e:
+    except git.GitCommandError as e:
         print(f"An error occurred during Git operations: {e}")
 
 # Example usage
