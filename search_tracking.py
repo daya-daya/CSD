@@ -4,12 +4,10 @@ import shutil
 import subprocess
 from datetime import datetime
 from time import sleep
-os.environ['GIT_USERNAME'] = 'daya-daya'
-os.environ['GIT_PASSWORD'] = 'Anildaya@9398'
 
 
-# Clone the repository
-subprocess.run(["git", "clone", "https://daya-daya:Anildaya@9398@github.com/username/repo.git"], check=True)
+
+
 
 LOG_DIR = "search_log"
 DOWNLOAD_DIR = "download_folder"
@@ -98,9 +96,17 @@ def delete_file_from_git(file_path):
         # Push the commit
         subprocess.run(["git", "push"], check=True)
         print("Successfully pushed changes to Git.")
+        os.environ['GIT_USERNAME'] = 'daya-daya'
+        os.environ['GIT_PASSWORD'] = 'Anildaya@9398'
+       # Clone the repository
+       subprocess.run(["git", "clone", "https://daya-daya:Anildaya@9398@github.com/username/repo.git"], check=True)
 
     except subprocess.CalledProcessError as e:
         print(f"Error during Git operations: {e}")
 
 # Example usage
 log_search("example search term")
+os.environ['GIT_USERNAME'] = 'daya-daya'
+os.environ['GIT_PASSWORD'] = 'Anildaya9398'
+# Clone the repository
+subprocess.run(["git", "clone", "https://daya-daya:Anildaya9398@github.com/username/repo.git"], check=True)
