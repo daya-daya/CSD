@@ -80,20 +80,21 @@ def download_and_delete_after_24_hours(log_file):
 
 def delete_file_from_git(file_path):
     try:
-        # Remove the file from the Git repository
+        # Stage the file for removal
         subprocess.run(["git", "rm", file_path], check=True)
+        print(f"Staged file for removal: {file_path}")
 
         # Commit the change
-        subprocess.run(["git", "commit", "-m", f"Deleted file: {file_path}"], check=True)
+        commit_message = f"Deleted file: {file_path}"
+        subprocess.run(["git", "commit", "-m", commit_message], check=True)
+        print(f"Committed change with message: '{commit_message}'")
 
         # Push the commit
         subprocess.run(["git", "push"], check=True)
-
-        print(f"File {file_path} deleted from Git and committed.")
+        print("Successfully pushed changes to Git.")
 
     except subprocess.CalledProcessError as e:
         print(f"Error during Git operations: {e}")
-
 
 # Example usage
 log_search("example search term")
