@@ -19,6 +19,8 @@ def log_search(search_term):
     if os.path.exists(log_file):
         # Load existing data
         existing_df = pd.read_excel(log_file, engine='openpyxl')
+        print("Existing DataFrame:")
+        print(existing_df)
 
         # Check if search term already exists
         if search_term in existing_df["Search Term"].values:
@@ -38,6 +40,8 @@ def log_search(search_term):
 
         # Save the updated data back to the file
         existing_df.to_excel(log_file, index=False, engine='openpyxl')
+        print("Updated DataFrame:")
+        print(existing_df)
     else:
         # Create new log file with initial data
         search_data = {
@@ -47,6 +51,7 @@ def log_search(search_term):
         }
         log_df = pd.DataFrame(search_data)
         log_df.to_excel(log_file, index=False, engine='openpyxl')
+        print(f"Created new log file at {log_file}")
 
     # Ensure the updated log file is tracked and pushed to GitHub
     commit_and_push_to_git(log_file)
@@ -59,12 +64,15 @@ def commit_and_push_to_git(log_file):
     try:
         # Stage the updated log file
         subprocess.run(["git", "add", log_file], check=True)
+        print(f"Staged {log_file}")
 
         # Commit the changes with a relevant message
         subprocess.run(["git", "commit", "-m", "Update search_log.xlsx with new search term"], check=True)
+        print("Committed changes")
 
         # Push the changes to the repository
         subprocess.run(["git", "push"], check=True)
+        print("Pushed changes to Git")
 
     except subprocess.CalledProcessError as e:
         print(f"An error occurred during Git operations: {e}")
