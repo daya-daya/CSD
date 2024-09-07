@@ -1,86 +1,101 @@
+import streamlit as st
 import pandas as pd
 import os
-import shutil
 import subprocess
 from datetime import datetime
-from time import sleep
+from zipfile import BadZipFile
 
+# Directories
 LOG_DIR = "search_log"
-DOWNLOAD_DIR = "download_folder"
-
 if not os.path.exists(LOG_DIR):
     os.makedirs(LOG_DIR)
-if not os.path.exists(DOWNLOAD_DIR):
-    os.makedirs(DOWNLOAD_DIR)
 
+# Path to the log file
+log_file = os.path.join(LOG_DIR, "search_log.xlsx")
+
+# Function to log search terms
 def log_search(search_term):
-    if not search_term.strip():
-        return  # Do nothing if the search_term is blank
-
-    log_file = os.path.join(LOG_DIR, "search_log.xlsx")
-    search_term = search_nlp_correction(search_term)
+    search_term = search_nlp_correction(search_term)  # Apply any corrections if necessary
     current_time = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
 
-    if os.path.exists(log_file):
-        # Load existing data
-        existing_df = pd.read_excel(log_file, engine='openpyxl')
+    try:
+        if os.path.exists(log_file):
+            # Load existing data
+            existing_df = pd.read_excel(log_file, engine='openpyxl')
+        else:
+            # Create new log if it doesn't exist
+            existing_df = pd.DataFrame(columns=["Search Term", "Count", "Last Searched"])
 
+        # Check if search term already exists
         if search_term in existing_df["Search Term"].values:
             # Update existing entry
             index = existing_df[existing_df["Search Term"] == search_term].index[0]
             existing_df.at[index, "Count"] += 1
             existing_df.at[index, "Last Searched"] = current_time
         else:
-            # Add new entry
-            search_data = {
+            # Add new search term
+            new_data = {
                 "Search Term": [search_term],
                 "Count": [1],
                 "Last Searched": [current_time]
             }
-            new_df = pd.DataFrame(search_data)
+            new_df = pd.DataFrame(new_data)
             existing_df = pd.concat([existing_df, new_df], ignore_index=True)
 
-        # Save the updated data back to the file
+        # Save the updated log to Excel
         existing_df.to_excel(log_file, index=False, engine='openpyxl')
-    else:
-        # Create new log file with initial data
-        search_data = {
+
+        # Commit and push the updated Excel file to GitHub
+        commit_and_push_to_git(log_file)
+
+    except BadZipFile:
+        # Handle corrupted Excel files
+        if os.path.exists(log_file):
+            os.remove(log_file)
+        new_data = {
             "Search Term": [search_term],
             "Count": [1],
             "Last Searched": [current_time]
         }
-        log_df = pd.DataFrame(search_data)
-        log_df.to_excel(log_file, index=False, engine='openpyxl')
-
-    # Commit and push changes to Git after logging the search
-    commit_and_push(log_file)
+        new_df = pd.DataFrame(new_data)
+        new_df.to_excel(log_file, index=False, engine='openpyxl')
 
 def search_nlp_correction(search_term):
-    # Placeholder for NLP-based search term correction
+    # NLP correction placeholder (optional)
     return search_term
 
-def commit_and_push(file_path):
+def commit_and_push_to_git(file_path):
     try:
-        # Check the status of the file
-        print("Checking git status...")
-        subprocess.run(["git", "status"], check=True)
-
-        # Add the file to the staging area
-        print(f"Adding {file_path} to git...")
+        # Add the file to the Git staging area
         subprocess.run(["git", "add", file_path], check=True)
 
         # Commit the file with a message
-        print(f"Committing {file_path} to git...")
-        subprocess.run(["git", "commit", "-m", f"Updated search log: {file_path}"], check=True)
+        commit_message = f"Update search log: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}"
+        subprocess.run(["git", "commit", "-m", commit_message], check=True)
 
-        # Push the commit to the repository
-        print(f"Pushing {file_path} to remote repository...")
+        # Push the commit to the remote repository
         subprocess.run(["git", "push"], check=True)
-
-        print("Changes pushed successfully!")
+        st.success("Search log updated and pushed to GitHub!")
 
     except subprocess.CalledProcessError as e:
-        print(f"An error occurred during Git operations: {e}")
+        st.error(f"An error occurred during Git operations: {e}")
 
-# Example usage
-log_search("example search term")
+# Streamlit App
+st.title("Search Logging App")
+
+# Search box input
+search_term = st.text_input("Enter search term:")
+
+# If a search term is entered
+if st.button("Search"):
+    if search_term.strip():
+        log_search(search_term)
+        st.success(f"Search term '{search_term}' logged successfully!")
+    else:
+        st.warning("Please enter a valid search term.")
+
+# Display the search log
+if os.path.exists(log_file):
+    st.subheader("Search Log")
+    search_log = pd.read_excel(log_file)
+    st.dataframe(search_log)
