@@ -4,7 +4,7 @@ from datetime import datetime
 import streamlit as st
 
 # Define the file path
-SEARCH_LOG_FILE = os.path.join("search_log", "search_log.xlsx")
+SEARCH_LOG_FILE = os.path.join("search_log/", "search_log.xlsx")
 
 # Ensure the search_log directory exists
 os.makedirs("search_log", exist_ok=True)
