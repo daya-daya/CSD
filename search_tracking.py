@@ -1,19 +1,20 @@
 import pandas as pd
 import os
+import shutil
+import subprocess
 from datetime import datetime
-import git  # Import GitPython
+from time import sleep
 
-# Directory to store search logs
 LOG_DIR = "search_log"
+DOWNLOAD_DIR = "download_folder"
+
 if not os.path.exists(LOG_DIR):
     os.makedirs(LOG_DIR)
+if not os.path.exists(DOWNLOAD_DIR):
+    os.makedirs(DOWNLOAD_DIR)
 
-def search_nlp_correction(search_term):
-    # Placeholder for NLP-based search term correction
-    return search_term
 
 def log_search(search_term):
-    # Check if the search_term is blank or contains only whitespace
     if not search_term.strip():
         return  # Do nothing if the search_term is blank
 
@@ -25,7 +26,6 @@ def log_search(search_term):
         # Load existing data
         existing_df = pd.read_excel(log_file, engine='openpyxl')
 
-        # Check if search term already exists
         if search_term in existing_df["Search Term"].values:
             # Update existing entry
             index = existing_df[existing_df["Search Term"] == search_term].index[0]
@@ -53,25 +53,47 @@ def log_search(search_term):
         log_df = pd.DataFrame(search_data)
         log_df.to_excel(log_file, index=False, engine='openpyxl')
 
-    # Ensure the updated log file is tracked and pushed to Git
-    commit_and_push_to_git(log_file)
+    # Schedule the download and delete process after 24 hours
+    download_and_delete_after_24_hours(log_file)
 
-def commit_and_push_to_git(log_file):
+
+def search_nlp_correction(search_term):
+    # Placeholder for NLP-based search term correction
+    return search_term
+
+
+def download_and_delete_after_24_hours(log_file):
+    # Wait for 24 hours (86400 seconds)
+    sleep(86400)
+
+    # Create a timestamped filename for download
+    timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+    download_path = os.path.join(DOWNLOAD_DIR, f"search_log_{timestamp}.xlsx")
+
+    # Copy the file to the download folder
+    shutil.copy(log_file, download_path)
+    print(f"File downloaded to {download_path}")
+
+    # Delete the file from Git
+    delete_file_from_git(log_file)
+
+
+def delete_file_from_git(file_path):
     try:
-        repo = git.Repo(".")  # Open the current repository
-        repo.git.add(log_file)  # Stage the updated log file
+        # Remove the file from the Git repository
+        subprocess.run(["git", "rm", file_path], check=True)
 
-        # Commit the changes
-        repo.index.commit("Update search_log.xlsx with new search term")
+        # Commit the change
+        subprocess.run(["git", "commit", "-m", f"Deleted file: {file_path}"], check=True)
 
-        # Push the changes to the repository
-        origin = repo.remote(name='origin')
-        origin.push()
-        
-        print("Successfully committed and pushed changes.")
+        # Push the commit
+        subprocess.run(["git", "push"], check=True)
 
-    except git.GitCommandError as e:
-        print(f"An error occurred during Git operations: {e}")
+        print(f"File {file_path} deleted from Git and committed.")
+
+    except subprocess.CalledProcessError as e:
+        print(f"Error during Git operations: {e}")
+
 
 # Example usage
 log_search("example search term")
