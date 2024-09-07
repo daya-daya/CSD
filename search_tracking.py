@@ -12,10 +12,14 @@ os.makedirs("search_log", exist_ok=True)
 # Function to create the Excel file if it doesn't exist
 def create_log_file_if_not_exists():
     if not os.path.exists(SEARCH_LOG_FILE):
-        # Create an empty DataFrame with the desired columns
-        search_log_df = pd.DataFrame(columns=["Search Term", "Count", "Last Searched"])
-        # Save the empty DataFrame as an Excel file
-        search_log_df.to_excel(SEARCH_LOG_FILE, index=False)
+        try:
+            # Create an empty DataFrame with the desired columns
+            search_log_df = pd.DataFrame(columns=["Search Term", "Count", "Last Searched"])
+            # Save the empty DataFrame as an Excel file
+            search_log_df.to_excel(SEARCH_LOG_FILE, index=False)
+            print(f"Created new log file at {SEARCH_LOG_FILE}")
+        except Exception as e:
+            print(f"Error creating log file: {e}")
 
 # Function to log searches
 def log_search(search_term):
@@ -25,33 +29,40 @@ def log_search(search_term):
     # Ensure the file exists, create it if not
     create_log_file_if_not_exists()
 
-    # Load the search log data
-    search_log_df = pd.read_excel(SEARCH_LOG_FILE)
-    
-    # Check if the search term already exists
-    if search_term in search_log_df["Search Term"].values:
-        # Increment the count for the existing search term
-        search_log_df.loc[search_log_df["Search Term"] == search_term, "Count"] += 1
-        # Update the last searched timestamp
-        search_log_df.loc[search_log_df["Search Term"] == search_term, "Last Searched"] = current_time
-    else:
-        # Add a new entry for the search term
-        new_entry = {"Search Term": search_term, "Count": 1, "Last Searched": current_time}
-        search_log_df = search_log_df.append(new_entry, ignore_index=True)
-    
-    # Save the updated search log to the Excel file
-    search_log_df.to_excel(SEARCH_LOG_FILE, index=False)
+    try:
+        # Load the search log data
+        search_log_df = pd.read_excel(SEARCH_LOG_FILE)
+        
+        # Check if the search term already exists
+        if search_term in search_log_df["Search Term"].values:
+            # Increment the count for the existing search term
+            search_log_df.loc[search_log_df["Search Term"] == search_term, "Count"] += 1
+            # Update the last searched timestamp
+            search_log_df.loc[search_log_df["Search Term"] == search_term, "Last Searched"] = current_time
+        else:
+            # Add a new entry for the search term
+            new_entry = {"Search Term": search_term, "Count": 1, "Last Searched": current_time}
+            search_log_df = search_log_df.append(new_entry, ignore_index=True)
+        
+        # Save the updated search log to the Excel file
+        search_log_df.to_excel(SEARCH_LOG_FILE, index=False)
+        print(f"Logged search term: {search_term}")
+    except Exception as e:
+        print(f"Error logging search: {e}")
 
 # Function to allow admin to download the search log
 def download_search_log():
-    with open(SEARCH_LOG_FILE, "rb") as file:
-        btn = st.download_button(
-            label="Download Search Log",
-            data=file,
-            file_name="search_log.xlsx",
-            mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-        )
-    return btn
+    try:
+        with open(SEARCH_LOG_FILE, "rb") as file:
+            btn = st.download_button(
+                label="Download Search Log",
+                data=file,
+                file_name="search_log.xlsx",
+                mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+            )
+        return btn
+    except Exception as e:
+        print(f"Error downloading search log: {e}")
 
 # Function to handle search input
 def render_search_box():
@@ -76,6 +87,12 @@ def admin_panel():
         download_search_log()
     else:
         st.write("No search log available yet.")
+
+# Function for NLP-based correction
+def search_nlp_correction(search_term):
+    # Dummy implementation of NLP correction
+    # Replace with actual NLP-based correction
+    return search_term
 
 # Streamlit main logic (example for demonstration)
 def main():
