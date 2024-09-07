@@ -4,6 +4,12 @@ import shutil
 import subprocess
 from datetime import datetime
 from time import sleep
+os.environ['GIT_USERNAME'] = 'daya-daya'
+os.environ['GIT_PASSWORD'] = 'Anildaya@9398'
+
+
+# Clone the repository
+subprocess.run(["git", "clone", "https://daya-daya:Anildaya@9398@github.com/username/repo.git"], check=True)
 
 LOG_DIR = "search_log"
 DOWNLOAD_DIR = "download_folder"
