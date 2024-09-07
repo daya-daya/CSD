@@ -1,112 +1,92 @@
 import pandas as pd
 import os
-import shutil
-import subprocess
 from datetime import datetime
-from time import sleep
+import streamlit as st
 
+# Define the file path
+SEARCH_LOG_FILE = os.path.join("search_log", "search_log.xlsx")
 
+# Ensure the search_log directory exists
+os.makedirs("search_log", exist_ok=True)
 
+# Function to create the Excel file if it doesn't exist
+def create_log_file_if_not_exists():
+    if not os.path.exists(SEARCH_LOG_FILE):
+        # Create an empty DataFrame with the desired columns
+        search_log_df = pd.DataFrame(columns=["Search Term", "Count", "Last Searched"])
+        # Save the empty DataFrame as an Excel file
+        search_log_df.to_excel(SEARCH_LOG_FILE, index=False)
 
-
-LOG_DIR = "search_log"
-DOWNLOAD_DIR = "download_folder"
-
-if not os.path.exists(LOG_DIR):
-    os.makedirs(LOG_DIR)
-if not os.path.exists(DOWNLOAD_DIR):
-    os.makedirs(DOWNLOAD_DIR)
-
-
+# Function to log searches
 def log_search(search_term):
-    if not search_term.strip():
-        return  # Do nothing if the search_term is blank
+    # Get current time
+    current_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    
+    # Ensure the file exists, create it if not
+    create_log_file_if_not_exists()
 
-    log_file = os.path.join(LOG_DIR, "search_log.xlsx")
-    search_term = search_nlp_correction(search_term)
-    current_time = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-
-    if os.path.exists(log_file):
-        # Load existing data
-        existing_df = pd.read_excel(log_file, engine='openpyxl')
-
-        if search_term in existing_df["Search Term"].values:
-            # Update existing entry
-            index = existing_df[existing_df["Search Term"] == search_term].index[0]
-            existing_df.at[index, "Count"] += 1
-            existing_df.at[index, "Last Searched"] = current_time
-        else:
-            # Add new entry
-            search_data = {
-                "Search Term": [search_term],
-                "Count": [1],
-                "Last Searched": [current_time]
-            }
-            new_df = pd.DataFrame(search_data)
-            existing_df = pd.concat([existing_df, new_df], ignore_index=True)
-
-        # Save the updated data back to the file
-        existing_df.to_excel(log_file, index=False, engine='openpyxl')
+    # Load the search log data
+    search_log_df = pd.read_excel(SEARCH_LOG_FILE)
+    
+    # Check if the search term already exists
+    if search_term in search_log_df["Search Term"].values:
+        # Increment the count for the existing search term
+        search_log_df.loc[search_log_df["Search Term"] == search_term, "Count"] += 1
+        # Update the last searched timestamp
+        search_log_df.loc[search_log_df["Search Term"] == search_term, "Last Searched"] = current_time
     else:
-        # Create new log file with initial data
-        search_data = {
-            "Search Term": [search_term],
-            "Count": [1],
-            "Last Searched": [current_time]
-        }
-        log_df = pd.DataFrame(search_data)
-        log_df.to_excel(log_file, index=False, engine='openpyxl')
+        # Add a new entry for the search term
+        new_entry = {"Search Term": search_term, "Count": 1, "Last Searched": current_time}
+        search_log_df = search_log_df.append(new_entry, ignore_index=True)
+    
+    # Save the updated search log to the Excel file
+    search_log_df.to_excel(SEARCH_LOG_FILE, index=False)
 
-    # Schedule the download and delete process after 24 hours
-    download_and_delete_after_24_hours(log_file)
+# Function to allow admin to download the search log
+def download_search_log():
+    with open(SEARCH_LOG_FILE, "rb") as file:
+        btn = st.download_button(
+            label="Download Search Log",
+            data=file,
+            file_name="search_log.xlsx",
+            mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+        )
+    return btn
 
+# Function to handle search input
+def render_search_box():
+    search_term = st.text_input("Search Item Description", "")  # User's search input
+    search_term = search_term.lower()  # Convert to lowercase for case-insensitive search
+    corrected_search_term = search_nlp_correction(search_term)  # Correct the search term using NLP
 
-def search_nlp_correction(search_term):
-    # Placeholder for NLP-based search term correction
+    # Log the search term to the Excel sheet
+    log_search(corrected_search_term)
+
+    if search_term:
+        # Perform search and display results...
+        pass
+    
     return search_term
 
+# Function for admin panel (download option)
+def admin_panel():
+    st.header("Admin Panel")
+    if os.path.exists(SEARCH_LOG_FILE):
+        st.write("Download the search log:")
+        download_search_log()
+    else:
+        st.write("No search log available yet.")
 
-def download_and_delete_after_24_hours(log_file):
-    # Wait for 24 hours (86400 seconds)
-    sleep(86400)
+# Streamlit main logic (example for demonstration)
+def main():
+    st.title("Search Application")
 
-    # Create a timestamped filename for download
-    timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
-    download_path = os.path.join(DOWNLOAD_DIR, f"search_log_{timestamp}.xlsx")
+    option = st.selectbox("Choose an option", ("Search", "Admin Panel"))
 
-    # Copy the file to the download folder
-    shutil.copy(log_file, download_path)
-    print(f"File downloaded to {download_path}")
+    if option == "Search":
+        render_search_box()
+    elif option == "Admin Panel":
+        admin_panel()
 
-    # Delete the file from Git
-    delete_file_from_git(log_file)
-
-
-def delete_file_from_git(file_path):
-    try:
-        # Stage the file for removal
-        subprocess.run(["git", "rm", file_path], check=True)
-        print(f"Staged file for removal: {file_path}")
-
-        # Commit the change
-        commit_message = f"Deleted file: {file_path}"
-        subprocess.run(["git", "commit", "-m", commit_message], check=True)
-        print(f"Committed change with message: '{commit_message}'")
-
-        # Push the commit
-        subprocess.run(["git", "push"], check=True)
-        print("Successfully pushed changes to Git.")
-        os.environ['GIT_USERNAME'] = 'daya-daya'
-        os.environ['GIT_PASSWORD'] = 'Anildaya@9398'
-       # Clone the repository
-       subprocess.run(["git", "clone", "https://daya-daya:Anildaya@9398@github.com/username/repo.git"], check=True)
-
-    except subprocess.CalledProcessError as e:
-        print(f"Error during Git operations: {e}")
-
-# Example usage
-log_search("example search term")
-os.environ['GIT_USERNAME'] = 'daya-daya'
-os.environ['GIT_PASSWORD'] = 'Anildaya9398'
-# Clone the repository
-subprocess.run(["git", "clone", "https://daya-daya:Anildaya9398@github.com/username/repo.git"], check=True)
+if __name__ == "__main__":
+    main()
