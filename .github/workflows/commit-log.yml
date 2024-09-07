@@ -1,0 +1,35 @@
+name: Commit Search Log
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  commit-log:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v3
+        with:
+          python-version: '3.9'
+
+      - name: Install dependencies
+        run: |
+          pip install pandas openpyxl
+
+      - name: Commit search log
+        run: |
+          git config --global user.name 'github-actions'
+          git config --global user.email 'github-actions@github.com'
+          
+          # Check if the search log file has changed
+          git add search_log/search_log.xlsx
+          git diff-index --quiet HEAD || git commit -m 'Update search log file'
+          
+          # Push changes
+          git push
