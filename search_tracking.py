@@ -4,11 +4,14 @@ from datetime import datetime
 from fuzzywuzzy import fuzz, process
 
 # Directory for storing search logs
-LOG_DIR = "search_log"
-os.makedirs(LOG_DIR, exist_ok=True)
-
-SEARCH_LOG_FILE = os.path.join(LOG_DIR, "search_log.xlsx")
-
+directory = 'search_log'
+file_path = os.path.join(directory, 'search_log.xlsx')
+if not os.path.exists(directory):
+    os.makedirs(directory)
+ if not os.path.exists(file_path):
+    # Create a new Excel file with appropriate columns
+    df = pd.DataFrame(columns=['Item Searched', 'Search Count', 'Last Searched Date'])
+    df.to_excel(file_path, index=False)   
 # Function to correct the search term based on previously logged terms
 def search_nlp_correction(search_term, previous_searches):
     """
