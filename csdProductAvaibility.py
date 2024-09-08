@@ -344,21 +344,22 @@ def render_search_box():
 
     # Get the search term from the user
     search_term = st.text_input("Search Item Description", "")
-    
+
 
     # Correct the search term based on previous searches
     corrected_term = search_nlp_correction(search_term, previous_searches)
 
     # Log the search and get updated search terms
     updated_searches = log_search(corrected_term)
-
+    #print(updated_searches)
     if search_term:
-        files = list_files()  # Implement list_files to get files in UPLOAD_DIR
+        files = list_files() # Implement list_files to get files in UPLOAD_DIR
+        #print(files)
         if files:
             all_data = pd.concat([process_data(load_data(os.path.join(UPLOAD_DIR, file))) for file in files if
                                   load_data(os.path.join(UPLOAD_DIR, file)) is not None], ignore_index=True)
-            result_data = search_data(all_data, corrected_term)
-
+            result_data = search_data(all_data, updated_searches)
+            print(all_data)
             if not result_data.empty:
                 styled_data = result_data.style.apply(color_banded_rows, axis=1)
                 st.dataframe(styled_data, use_container_width=True, hide_index=True)
@@ -366,7 +367,6 @@ def render_search_box():
                 st.write("No matching items found.")
         else:
             st.write("No files available. Please upload a file via the Admin Panel.")
-
     return search_term
 
 
