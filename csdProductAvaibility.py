@@ -336,26 +336,34 @@ with col2:
 
 
 # Common Search Box
+# Common Search Box to search the dataset
 def render_search_box():
-    # Fetch previous searches
+    # Fetch previous searches from the log (if needed for NLP correction)
     previous_searches = get_previous_searches()
 
     # Get the search term from the user
-    search_term = st.text_input("Search Item Description")
+    search_term = st.text_input("Search Item Description", "")
 
-    # Correct the search term based on previous searches
+    # Correct the search term using NLP based on previous searches
     corrected_term = search_nlp_correction(search_term, previous_searches)
 
-    # Log the search and get updated search terms
-    updated_searches = log_search(corrected_term)
+    # Log the search with the corrected term
+    log_search(corrected_term)
 
-    if search_term:
-        files = list_files()  # Implement list_files to get files in UPLOAD_DIR
+    if search_term:  # Proceed only if there's a search term
+        # List all files in the UPLOAD_DIR
+        files = list_files()
+        
         if files:
-            all_data = pd.concat([process_data(load_data(os.path.join(UPLOAD_DIR, file))) for file in files if
-                                  load_data(os.path.join(UPLOAD_DIR, file)) is not None], ignore_index=True)
+            # Process and search through all uploaded datasets
+            all_data = pd.concat([process_data(load_data(os.path.join(UPLOAD_DIR, file))) 
+                                  for file in files if load_data(os.path.join(UPLOAD_DIR, file)) is not None], 
+                                  ignore_index=True)
+            
+            # Search for the corrected term in the dataset
             result_data = search_data(all_data, corrected_term)
 
+            # Display the result in a styled table if found
             if not result_data.empty:
                 styled_data = result_data.style.apply(color_banded_rows, axis=1)
                 st.dataframe(styled_data, use_container_width=True, hide_index=True)
@@ -364,7 +372,6 @@ def render_search_box():
         else:
             st.write("No files available. Please upload a file via the Admin Panel.")
 
-    return search_term
 
 
 # Main Application Logic
