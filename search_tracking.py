@@ -4,14 +4,11 @@ from datetime import datetime
 from fuzzywuzzy import fuzz, process
 
 # Directory for storing search logs
-directory = 'search_log'
-file_path = os.path.join(directory, 'search_log.xlsx')
-if not os.path.exists(directory):
-    os.makedirs(directory)
- if not os.path.exists(file_path):
-    # Create a new Excel file with appropriate columns
-    df = pd.DataFrame(columns=['Item Searched', 'Search Count', 'Last Searched Date'])
-    df.to_excel(file_path, index=False)   
+LOG_DIR = "search_log"
+os.makedirs(LOG_DIR, exist_ok=True)
+
+SEARCH_LOG_FILE = os.path.join(LOG_DIR, "search_log.xlsx")
+
 # Function to correct the search term based on previously logged terms
 def search_nlp_correction(search_term, previous_searches):
     """
@@ -50,38 +47,48 @@ def get_previous_searches():
     return []  # Return an empty list if no log exists
 
 # Function to log searches, updating the existing entry or adding a new one
-
-SEARCH_LOG_FILE = 'search_log/search_log.xlsx'
-
 def log_search(search_term):
-    # Create a DataFrame with search term and timestamp
-    search_data = pd.DataFrame({
-        'Search Term': [search_term],
-        'Timestamp': [pd.Timestamp.now()],
-        'Count': [1]
-    })
+    """
+    Logs the search term and timestamp, updating the existing entry or adding a new one.
 
-    # Check if the file exists, if not, create it
-    if not os.path.exists(SEARCH_LOG_FILE):
-        # If file does not exist, create a new Excel file with the search data
-        search_data.to_excel(SEARCH_LOG_FILE, index=False)
+    Parameters:
+        search_term (str): The search term entered by the user.
+
+    Returns:
+        None
+    """
+    if not search_term.strip():  # Check if search term is empty
+        print("No search term provided. No record added.")
+        return
+
+    # Get the current timestamp
+    timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+
+    # Check if the search log file exists
+    if os.path.exists(SEARCH_LOG_FILE):
+        # Load existing log
+        search_log = pd.read_excel(SEARCH_LOG_FILE, engine='openpyxl')
     else:
-        # If the file exists, read it and update the search count if the term already exists
-        existing_data = pd.read_excel(SEARCH_LOG_FILE)
+        # Create a new DataFrame if the file does not exist
+        search_log = pd.DataFrame(columns=["Search Term", "Timestamp", "Search Count"])
 
-        # Check if the search term already exists
-        if search_term in existing_data['Search Term'].values:
-            existing_data.loc[existing_data['Search Term'] == search_term, 'Count'] += 1
-            existing_data.loc[existing_data['Search Term'] == search_term, 'Timestamp'] = pd.Timestamp.now()
-        else:
-            # Append the new search term
-            existing_data = pd.concat([existing_data, search_data], ignore_index=True)
+    # Check if the 'Search Term' column exists
+    if "Search Term" not in search_log.columns:
+        print("Error: 'Search Term' column is missing in the DataFrame.")
+        return
 
-        # Write the updated data back to the Excel file
-        with pd.ExcelWriter(SEARCH_LOG_FILE, engine='openpyxl', mode='w') as writer:
-            existing_data.to_excel(writer, index=False)
+    # Check if the search term already exists in the log
+    if search_term in search_log["Search Term"].values:
+        # Update the count and timestamp for the existing term
+        search_log.loc[search_log["Search Term"] == search_term, "Search Count"] += 1
+        search_log.loc[search_log["Search Term"] == search_term, "Timestamp"] = timestamp
+    else:
+        # Add a new entry to the log
+        new_entry = {"Search Term": search_term, "Timestamp": timestamp, "Search Count": 1}
+        search_log = pd.concat([search_log, pd.DataFrame([new_entry])], ignore_index=True)
 
-    return search_term
+    # Save the updated log back to the Excel file
+    search_log.to_excel(SEARCH_LOG_FILE, index=False, engine='openpyxl')
 
 # Example usage
 if __name__ == "__main__":
