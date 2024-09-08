@@ -1,6 +1,7 @@
 import streamlit as st
 import pandas as pd
 import os
+import re
 from datetime import datetime
 from search_tracking import log_search, search_nlp_correction, get_previous_searches
 # Define your admin credentials (for simplicity, hard-coded here)
@@ -15,6 +16,21 @@ DEMAND_DIR = "Demand_stock"
 # Ensure the directories exist
 os.makedirs(UPLOAD_DIR, exist_ok=True)
 os.makedirs(DEMAND_DIR, exist_ok=True)
+def download_demand_data():
+    demand_files = os.listdir(DEMAND_DIR)
+    if demand_files:
+        for demand_file in demand_files:
+            file_path = os.path.join(DEMAND_DIR, demand_file)
+            with open(file_path, "rb") as f:
+                st.download_button(
+                    label=f"Download {demand_file}",
+                    data=f,
+                    file_name=demand_file,
+                    mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                    key=f"download_{demand_file}"  # Unique key for each file
+                )
+    else:
+        st.write("No demand data available to download.")
 def download_search_log():
     SEARCH_LOG_DIR = "search_log"
     log_files = os.listdir(SEARCH_LOG_DIR)
@@ -23,10 +39,11 @@ def download_search_log():
             file_path = os.path.join(SEARCH_LOG_DIR, log_file)
             with open(file_path, "rb") as f:
                 st.download_button(
-                    label=f"Download {log_file}",
+                    label="Download Search Log",
                     data=f,
-                    file_name=log_file,
-                    mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+                    file_name="search_log.xlsx",
+                    mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                    key="download_search_log"  # Unique key
                 )
     else:
         st.write("No search log data available to download.")
@@ -86,27 +103,48 @@ def load_data(file):
 
 def process_data(data):
     required_columns = ['Index No', 'Item Description', 'RRATE', 'Closing']
+
+    # Check for missing required columns
     if not all(col in data.columns for col in required_columns):
-        st.error(f"Missing required columns in data.")
+        st.error("Missing required columns in data.")
         return pd.DataFrame()  # Return empty DataFrame
 
-    # Filter out rows where all the required columns are null or zero
-    data = data[~(data[required_columns].isnull().all(axis=1) | (data[required_columns] == 0).all(axis=1))]
+    # Define a function to check for special characters
+    def has_special_characters(value):
+        if isinstance(value, str):
+            return bool(re.search(r'[^\w\s]', value))
+        return False
 
-    data = data[required_columns]
-    data = data.rename(columns={'RRATE': 'Price'})
+    # Remove rows with None or special characters in required columns
+    data = data.dropna(subset=required_columns)  # Drop rows with NaN values in required columns
+    data = data[~data['Index No'].apply(has_special_characters)]  # Drop rows with special characters in 'Index No'
+    data = data[~data['Item Description'].apply(
+        has_special_characters)]  # Drop rows with special characters in 'Item Description'
 
+    # Define a function to safely convert and format 'RRATE'
+    def format_price(value):
+        try:
+            if pd.notnull(value) and value != 0:
+                return f"{float(value):.2f}"  # Convert to float and format
+            else:
+                return 'Soon Available'
+        except ValueError:
+            return 'Soon Available'
+
+    # Apply the format function to 'RRATE'
+    data['Price'] = data['RRATE'].apply(format_price)
+
+    # Determine availability
+    data['Available'] = data['Closing'].apply(lambda x: 'YES' if pd.notnull(x) and x != 0 else 'SOON AVAILABLE')
+
+    # Select only the required columns
+    data = data[['Index No', 'Item Description', 'Price', 'Available']]
+
+    # Reset index and adjust index to start from 1
     data.reset_index(drop=True, inplace=True)
     data.index += 1
     data.index.name = 'S.No'
     data.reset_index(inplace=True)
-
-    data['Price'] = pd.to_numeric(data['Price'], errors='coerce')
-    data['Price'] = data['Price'].apply(lambda x: f"{x:.2f}" if pd.notnull(x) else '0.00')
-
-    data['Available'] = data['Closing'].apply(lambda x: 'Yes' if pd.notnull(x) and x != 0 else 'No')
-
-    data = data.drop(columns=['Closing'])
 
     return data
 
@@ -125,20 +163,29 @@ def color_banded_rows(row):
         row)
 
 
-def save_demand_data(data):
+def save_demand_data(new_data):
     today = datetime.now()
     next_day = today + pd.DateOffset(days=1)
     date_str = next_day.strftime("%Y-%m-%d")
     file_name = f"Demand_{date_str}.xlsx"
     file_path = os.path.join(DEMAND_DIR, file_name)
 
-    # Check if file already exists
+    # If file exists, read existing data
     if os.path.exists(file_path):
         existing_data = pd.read_excel(file_path, engine='openpyxl')
-        data = pd.concat([existing_data, data], ignore_index=True)
+        # Determine the next serial number
+        max_serial_no = existing_data["S/No."].max()
+        new_data["S/No."] = range(max_serial_no + 1, max_serial_no + 1 + len(new_data))
+        combined_data = pd.concat([existing_data, new_data], ignore_index=True)
+    else:
+        # If file does not exist, initialize serial numbers
+        new_data["S/No."] = range(1, len(new_data) + 1)
+        combined_data = new_data
 
-    data.to_excel(file_path, index=False, engine='openpyxl')
+    # Save the updated data to the file
+    combined_data.to_excel(file_path, index=False, engine='openpyxl')
     st.success(f"Demand data saved to {file_path}")
+
 
 
 
@@ -334,12 +381,15 @@ if st.session_state.page == "admin":
             if authenticate(username, password):
                 st.session_state.logged_in = True
                 st.sidebar.success("Logged in successfully!")
+
             else:
                 st.sidebar.error("Invalid username or password.")
     else:
         st.sidebar.header("Admin Panel")
         if st.button("Download Search Log"):
             download_search_log()
+        if st.button("Download_demand_data"):
+            download_demand_data()
         st.sidebar.subheader("Upload File")
         uploaded_file = st.sidebar.file_uploader("Upload your Excel file", type=["xlsx", "xls"])
 
@@ -347,8 +397,7 @@ if st.session_state.page == "admin":
             file_path = save_uploaded_file(uploaded_file)
             st.session_state.file_path = file_path
             st.sidebar.success(f"File uploaded: {uploaded_file.name}")
-            if st.button("Download Search Log"):
-                download_search_log()
+
         st.sidebar.subheader("Delete File")
         files = list_files()
         if files:
@@ -385,6 +434,7 @@ if st.session_state.page == "admin":
 
 elif st.session_state.page == "demand":
     render_demand_form()
+
 
 else:
     # Display data from the uploaded_files directory
