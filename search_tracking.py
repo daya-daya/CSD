@@ -1,7 +1,6 @@
 import os
 import pandas as pd
 from datetime import datetime
-from fuzzywuzzy import fuzz, process
 
 # Directory for storing search logs
 LOG_DIR = "search_log"
@@ -13,7 +12,17 @@ print(f"Search log file path: {SEARCH_LOG_FILE}")
 
 # Function to correct the search term based on previously logged terms
 def search_nlp_correction(search_term, previous_searches):
-    # (Unchanged code)
+    # Define a function to compute similarity
+    def similar(a, b):
+        return fuzz.ratio(a, b)
+
+    # Get the best match from previous searches
+    best_match = process.extractOne(search_term, previous_searches, scorer=similar)
+    
+    if best_match and best_match[1] > 80:  # Adjust the threshold as needed
+        return best_match[0]
+    else:
+        return search_term
 
 # Function to fetch previously searched terms from the log
 def get_previous_searches():
