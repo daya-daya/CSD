@@ -48,49 +48,39 @@ def get_previous_searches():
 
 # Function to log searches, updating the existing entry or adding a new one
 def log_search(search_term):
-    """
-    Logs the search term and timestamp, updating the existing entry or adding a new one.
-
-    Parameters:
-        search_term (str): The search term entered by the user.
-
-    Returns:
-        None
-    """
-    if not search_term.strip():  # Check if search term is empty
-        print("No search term provided. No record added.")
-        return
-
-    # Get the current timestamp
-    timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-
-    # Check if the search log file exists
-    if os.path.exists(SEARCH_LOG_FILE):
+    # Check if the directory exists, if not, create it
+    if not os.path.exists('search_log'):
+        os.makedirs('search_log')
+    
+    # Check if the file exists, if not, create it with headers
+    if not os.path.isfile(SEARCH_LOG_FILE):
+        # Creating a new DataFrame with headers
+        df = pd.DataFrame(columns=['Search Term', 'Search Count', 'Last Searched'])
+        df.to_excel(SEARCH_LOG_FILE, index=False)
+    
+    # Now append or update the log
+    try:
         # Load existing log
-        search_log = pd.read_excel(SEARCH_LOG_FILE, engine='openpyxl')
-    else:
-        # Create a new DataFrame if the file does not exist
-        search_log = pd.DataFrame(columns=["Search Term", "Timestamp", "Search Count"])
+        df = pd.read_excel(SEARCH_LOG_FILE)
 
-    # Check if the 'Search Term' column exists
-    if "Search Term" not in search_log.columns:
-        print("Error: 'Search Term' column is missing in the DataFrame.")
-        return
+        # Check if the search term already exists
+        if search_term in df['Search Term'].values:
+            # Update the count and the last searched date
+            df.loc[df['Search Term'] == search_term, 'Search Count'] += 1
+            df.loc[df['Search Term'] == search_term, 'Last Searched'] = pd.Timestamp.now()
+        else:
+            # Add a new entry
+            new_entry = {'Search Term': search_term, 'Search Count': 1, 'Last Searched': pd.Timestamp.now()}
+            df = df.append(new_entry, ignore_index=True)
 
-    # Check if the search term already exists in the log
-    if search_term in search_log["Search Term"].values:
-        # Update the count and timestamp for the existing term
-        search_log.loc[search_log["Search Term"] == search_term, "Search Count"] += 1
-        search_log.loc[search_log["Search Term"] == search_term, "Timestamp"] = timestamp
-    else:
-        # Add a new entry to the log
-        new_entry = {"Search Term": search_term, "Timestamp": timestamp, "Search Count": 1}
-        search_log = pd.concat([search_log, pd.DataFrame([new_entry])], ignore_index=True)
+        # Save the updated log back to the Excel file
+        with pd.ExcelWriter(SEARCH_LOG_FILE, engine='openpyxl', mode='w') as writer:
+            df.to_excel(writer, index=False)
 
-    # Save the updated log back to the Excel file without overwriting
-    with pd.ExcelWriter(SEARCH_LOG_FILE, engine='openpyxl', mode='a', if_sheet_exists='overlay') as writer:
-        search_log.to_excel(writer, index=False)
+    except Exception as e:
+        print(f"Error while logging search: {e}")
 
+    return df
 
 
 # Example usage
