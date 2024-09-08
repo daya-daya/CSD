@@ -98,6 +98,8 @@ def load_data(file):
     except Exception as e:
         st.error(f"Error loading file {os.path.basename(file)}: {e}")
         return None
+    #print(data)
+
     return data
 
 
@@ -336,34 +338,34 @@ with col2:
 
 
 # Common Search Box
-def log_search(search_term):
-    UPLOAD_DIR = "uploaded_files"
-    # Create a DataFrame with search term and timestamp
-    search_data = pd.DataFrame({
-        'Search Term': [search_term],
-        'Timestamp': [pd.Timestamp.now()],
-        'Count': [1]
-    })
+def render_search_box():
+    # Fetch previous searches
+    previous_searches = get_previous_searches()
 
-    # Check if the file exists, if not, create it
-    if not os.path.exists(SEARCH_LOG_FILE):
-        # If file does not exist, create a new Excel file with the search data
-        search_data.to_excel(SEARCH_LOG_FILE, index=False)
-    else:
-        # If the file exists, read it and update the search count if the term already exists
-        existing_data = pd.read_excel(SEARCH_LOG_FILE)
+    # Get the search term from the user
+    search_term = st.text_input("Search Item Description", "")
+    
 
-        # Check if the search term already exists
-        if search_term in existing_data['Search Term'].values:
-            existing_data.loc[existing_data['Search Term'] == search_term, 'Count'] += 1
-            existing_data.loc[existing_data['Search Term'] == search_term, 'Timestamp'] = pd.Timestamp.now()
+    # Correct the search term based on previous searches
+    corrected_term = search_nlp_correction(search_term, previous_searches)
+
+    # Log the search and get updated search terms
+    updated_searches = log_search(corrected_term)
+
+    if search_term:
+        files = list_files()  # Implement list_files to get files in UPLOAD_DIR
+        if files:
+            all_data = pd.concat([process_data(load_data(os.path.join(UPLOAD_DIR, file))) for file in files if
+                                  load_data(os.path.join(UPLOAD_DIR, file)) is not None], ignore_index=True)
+            result_data = search_data(all_data, corrected_term)
+
+            if not result_data.empty:
+                styled_data = result_data.style.apply(color_banded_rows, axis=1)
+                st.dataframe(styled_data, use_container_width=True, hide_index=True)
+            else:
+                st.write("No matching items found.")
         else:
-            # Append the new search term
-            existing_data = pd.concat([existing_data, search_data], ignore_index=True)
-
-        # Write the updated data back to the Excel file
-        with pd.ExcelWriter(SEARCH_LOG_FILE, engine='openpyxl', mode='w') as writer:
-            existing_data.to_excel(writer, index=False)
+            st.write("No files available. Please upload a file via the Admin Panel.")
 
     return search_term
 
