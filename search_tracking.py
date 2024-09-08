@@ -1,6 +1,5 @@
 import os
 import pandas as pd
-from datetime import datetime
 from fuzzywuzzy import fuzz, process
 
 # Directory for storing search logs
@@ -13,13 +12,6 @@ SEARCH_LOG_FILE = os.path.join(LOG_DIR, "search_log.xlsx")
 def search_nlp_correction(search_term, previous_searches):
     """
     Corrects the search term using fuzzy matching against previous search terms.
-
-    Parameters:
-        search_term (str): The user's input for the search.
-        previous_searches (list): List of previously searched terms for correction.
-
-    Returns:
-        corrected_term (str): The closest matching term from previous searches, or the original term.
     """
     if previous_searches:
         corrected_term, score = process.extractOne(search_term, previous_searches, scorer=fuzz.token_sort_ratio)
@@ -31,9 +23,6 @@ def search_nlp_correction(search_term, previous_searches):
 def get_previous_searches():
     """
     Fetches the list of previously logged search terms from the search log file.
-
-    Returns:
-        list: List of previously searched terms.
     """
     if os.path.exists(SEARCH_LOG_FILE):
         # Load existing log
@@ -48,17 +37,16 @@ def get_previous_searches():
 
 # Function to log searches, updating the existing entry or adding a new one
 def log_search(search_term):
-    # Check if the directory exists, if not, create it
-    if not os.path.exists('search_log'):
-        os.makedirs('search_log')
-    
+    """
+    Logs the search term by either updating an existing entry or adding a new one.
+    """
     # Check if the file exists, if not, create it with headers
     if not os.path.isfile(SEARCH_LOG_FILE):
+        print(f"{SEARCH_LOG_FILE} not found. Creating a new file.")
         # Creating a new DataFrame with headers
         df = pd.DataFrame(columns=['Search Term', 'Search Count', 'Last Searched'])
         df.to_excel(SEARCH_LOG_FILE, index=False)
     
-    # Now append or update the log
     try:
         # Load existing log
         df = pd.read_excel(SEARCH_LOG_FILE)
@@ -76,12 +64,12 @@ def log_search(search_term):
         # Save the updated log back to the Excel file
         with pd.ExcelWriter(SEARCH_LOG_FILE, engine='openpyxl', mode='w') as writer:
             df.to_excel(writer, index=False)
-
+    
     except Exception as e:
         print(f"Error while logging search: {e}")
+        raise e
 
     return df
-
 
 # Example usage
 if __name__ == "__main__":
