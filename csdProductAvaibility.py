@@ -341,7 +341,7 @@ def render_search_box():
     previous_searches = get_previous_searches()
 
     # Get the search term from the user
-    search_term = st.text_input("Search Item Description", "")
+    search_term = st.text_input("Search Item Description")
 
     # Correct the search term based on previous searches
     corrected_term = search_nlp_correction(search_term, previous_searches)
