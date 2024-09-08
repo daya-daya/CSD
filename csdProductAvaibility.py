@@ -23,11 +23,10 @@ def download_search_log():
             file_path = os.path.join(SEARCH_LOG_DIR, log_file)
             with open(file_path, "rb") as f:
                 st.download_button(
-                    label="Download Search Log",
+                    label=f"Download {log_file}",
                     data=f,
-                    file_name="search_log.xlsx",
-                    mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-                    key="download_search_log"  # Unique key
+                    file_name=log_file,
+                    mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
                 )
     else:
         st.write("No search log data available to download.")
@@ -335,7 +334,6 @@ if st.session_state.page == "admin":
             if authenticate(username, password):
                 st.session_state.logged_in = True
                 st.sidebar.success("Logged in successfully!")
-
             else:
                 st.sidebar.error("Invalid username or password.")
     else:
@@ -349,7 +347,8 @@ if st.session_state.page == "admin":
             file_path = save_uploaded_file(uploaded_file)
             st.session_state.file_path = file_path
             st.sidebar.success(f"File uploaded: {uploaded_file.name}")
-
+            if st.button("Download Search Log"):
+                download_search_log()
         st.sidebar.subheader("Delete File")
         files = list_files()
         if files:
