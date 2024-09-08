@@ -15,21 +15,6 @@ DEMAND_DIR = "Demand_stock"
 # Ensure the directories exist
 os.makedirs(UPLOAD_DIR, exist_ok=True)
 os.makedirs(DEMAND_DIR, exist_ok=True)
-def download_demand_data():
-    demand_files = os.listdir(DEMAND_DIR)
-    if demand_files:
-        for demand_file in demand_files:
-            file_path = os.path.join(DEMAND_DIR, demand_file)
-            with open(file_path, "rb") as f:
-                st.download_button(
-                    label=f"Download {demand_file}",
-                    data=f,
-                    file_name=demand_file,
-                    mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-                    key=f"download_{demand_file}"  # Unique key for each file
-                )
-    else:
-        st.write("No demand data available to download.")
 def download_search_log():
     SEARCH_LOG_DIR = "search_log"
     log_files = os.listdir(SEARCH_LOG_DIR)
@@ -141,29 +126,20 @@ def color_banded_rows(row):
         row)
 
 
-def save_demand_data(new_data):
+def save_demand_data(data):
     today = datetime.now()
     next_day = today + pd.DateOffset(days=1)
     date_str = next_day.strftime("%Y-%m-%d")
     file_name = f"Demand_{date_str}.xlsx"
     file_path = os.path.join(DEMAND_DIR, file_name)
 
-    # If file exists, read existing data
+    # Check if file already exists
     if os.path.exists(file_path):
         existing_data = pd.read_excel(file_path, engine='openpyxl')
-        # Determine the next serial number
-        max_serial_no = existing_data["S/No."].max()
-        new_data["S/No."] = range(max_serial_no + 1, max_serial_no + 1 + len(new_data))
-        combined_data = pd.concat([existing_data, new_data], ignore_index=True)
-    else:
-        # If file does not exist, initialize serial numbers
-        new_data["S/No."] = range(1, len(new_data) + 1)
-        combined_data = new_data
+        data = pd.concat([existing_data, data], ignore_index=True)
 
-    # Save the updated data to the file
-    combined_data.to_excel(file_path, index=False, engine='openpyxl')
+    data.to_excel(file_path, index=False, engine='openpyxl')
     st.success(f"Demand data saved to {file_path}")
-
 
 
 
@@ -366,8 +342,6 @@ if st.session_state.page == "admin":
         st.sidebar.header("Admin Panel")
         if st.button("Download Search Log"):
             download_search_log()
-        if st.button("Download_demand_data"):
-            download_demand_data()
         st.sidebar.subheader("Upload File")
         uploaded_file = st.sidebar.file_uploader("Upload your Excel file", type=["xlsx", "xls"])
 
@@ -412,7 +386,6 @@ if st.session_state.page == "admin":
 
 elif st.session_state.page == "demand":
     render_demand_form()
-
 
 else:
     # Display data from the uploaded_files directory
