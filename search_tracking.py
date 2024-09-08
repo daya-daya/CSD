@@ -87,8 +87,11 @@ def log_search(search_term):
         new_entry = {"Search Term": search_term, "Timestamp": timestamp, "Search Count": 1}
         search_log = pd.concat([search_log, pd.DataFrame([new_entry])], ignore_index=True)
 
-    # Save the updated log back to the Excel file
-    search_log.to_excel(SEARCH_LOG_FILE, index=False, engine='openpyxl')
+    # Save the updated log back to the Excel file without overwriting
+    with pd.ExcelWriter(SEARCH_LOG_FILE, engine='openpyxl', mode='a', if_sheet_exists='overlay') as writer:
+        search_log.to_excel(writer, index=False)
+
+
 
 # Example usage
 if __name__ == "__main__":
