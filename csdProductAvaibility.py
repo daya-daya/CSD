@@ -118,7 +118,7 @@ def process_data(data):
     # Remove rows with None or special characters in required columns
     data = data.dropna(subset=required_columns)  # Drop rows with NaN values in required columns
     data = data[~data['Index No'].apply(has_special_characters)]  # Drop rows with special characters in 'Index No'
-    data = data[~data['Item Description'].apply(
+    data = data[data['Item Description'].apply(
         has_special_characters)]  # Drop rows with special characters in 'Item Description'
 
     # Define a function to safely convert and format 'RRATE'
