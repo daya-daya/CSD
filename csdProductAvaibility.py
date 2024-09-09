@@ -3,9 +3,9 @@ import pandas as pd
 import os
 import re
 from datetime import datetime
-from search_tracking import log_search, search_nlp_correction, get_previous_searches
+from search_tracking import log_search
 # Define your admin credentials (for simplicity, hard-coded here)
-
+st.set_page_config(layout="wide")
 ADMIN_USERNAME = "admin"
 ADMIN_PASSWORD = "Anildaya"
 
@@ -98,8 +98,6 @@ def load_data(file):
     except Exception as e:
         st.error(f"Error loading file {os.path.basename(file)}: {e}")
         return None
-    #print(data)
-
     return data
 
 
@@ -137,7 +135,7 @@ def process_data(data):
     data['Price'] = data['RRATE'].apply(format_price)
 
     # Determine availability
-    data['Available'] = data['Closing'].apply(lambda x: 'YES' if pd.notnull(x) and x != 0 else 'AVAILABLE SOON')
+    data['Available'] = data['Closing'].apply(lambda x: 'YES' if pd.notnull(x) and x != 0 else 'SOON AVAILABLE')
 
     # Select only the required columns
     data = data[['Index No', 'Item Description', 'Price', 'Available']]
@@ -164,13 +162,16 @@ def color_banded_rows(row):
         'background-color: #f9f5e3; color: #333333' if row.name % 2 == 0 else 'background-color: #ffffff; color: #333333'] * len(
         row)
 
-
+#save Demand data
 def save_demand_data(new_data):
     today = datetime.now()
     next_day = today + pd.DateOffset(days=1)
     date_str = next_day.strftime("%Y-%m-%d")
     file_name = f"Demand_{date_str}.xlsx"
     file_path = os.path.join(DEMAND_DIR, file_name)
+
+    # Add a 'Date and Time' column to the new data
+    new_data["Date and Time"] = today.strftime("%Y-%m-%d %H:%M:%S")
 
     # If file exists, read existing data
     if os.path.exists(file_path):
@@ -186,42 +187,94 @@ def save_demand_data(new_data):
 
     # Save the updated data to the file
     combined_data.to_excel(file_path, index=False, engine='openpyxl')
-    st.success(f"Demand data saved to {file_path}")
+    st.success("Thank you")
 
-
+    #st.experimental_rerun()
 
 
 def render_demand_form():
-    with st.form(key='demand_form'):
-        service_no = st.text_input("Service No.")
-        name = st.text_input("Name")
-        product_name = st.text_input("Product Name")
-        quantity = st.number_input("Quantity", min_value=1)
-        mobile_no = st.text_input("Mobile No.")
-        alternate_no = st.text_input("Alternate No. (optional)", "")
-        address = st.text_area("Address")
-        image = st.file_uploader("Image (optional)", type=['jpg', 'png', 'jpeg'], label_visibility="collapsed")
+    st.markdown("""
+        <style>
+            .required-field-label::after {
+                content: "*";
+                color: red;
+                margin-left: 5px;
+                font-size: 1.2em;
+            }
+        </style>
+    """, unsafe_allow_html=True)
 
+    with st.form(key='demand_form'):
+        # Add custom labels with star for required fields
+        st.markdown("""
+            <div class="required-field-label">Service No.</div>
+        """, unsafe_allow_html=True)
+        service_no = st.text_input("", key="service_no", help="Required field")
+
+        st.markdown("""
+            <div class="required-field-label">Name</div>
+        """, unsafe_allow_html=True)
+        name = st.text_input("", key="name", help="Required field")
+
+        st.markdown("""
+            <div class="required-field-label">Product Name</div>
+        """, unsafe_allow_html=True)
+        product_name = st.text_input("", key="product_name", help="Required field")
+
+        st.markdown("""
+            <div class="required-field-label">Quantity</div>
+        """, unsafe_allow_html=True)
+        quantity = st.number_input("", min_value=1, key="quantity", help="Required field")
+
+        st.markdown("""
+            <div class="required-field-label">Mobile No.</div>
+        """, unsafe_allow_html=True)
+        mobile_no = st.text_input("", key="mobile_no", help="Required field")
+
+        st.markdown("""
+            <div>Alternate No. (optional)</div>
+        """, unsafe_allow_html=True)
+        alternate_no = st.text_input("", key="alternate_no")
+
+        st.markdown("""
+            <div class="required-field-label">Address</div>
+        """, unsafe_allow_html=True)
+        address = st.text_area("", key="address", help="Required field")
+
+        # Submit button
         submit_button = st.form_submit_button("Submit")
 
         if submit_button:
-            if not (service_no and name and product_name and quantity and mobile_no and address):
-                st.error("Please fill in all required fields.")
-                return
+            # Highlight required fields if not filled
+            required_fields = {
+                "service_no": service_no,
+                "name": name,
+                "product_name": product_name,
+                "quantity": quantity,
+                "mobile_no": mobile_no,
+                "address": address
+            }
 
-            data = pd.DataFrame({
-                "S/No.": [1],  # Adjust this if you need a proper sequence
-                "Service No.": [service_no],
-                "Name": [name],
-                "Product Name": [product_name],
-                "Quantity": [quantity],
-                "Mobile No.": [mobile_no],
-                "Alternate No.": [alternate_no],
-                "Address": [address],
-                "Image": [image.name if image else ""]
-            })
+            # Display errors and highlight required fields
+            for field, value in required_fields.items():
+                if not value:
+                    st.markdown(f"<p class='required-field-label'>Please fill in the {field.replace('_', ' ').title()}.</p>", unsafe_allow_html=True)
 
-            save_demand_data(data)
+            # Proceed with data processing if all required fields are filled
+            if all(value for value in required_fields.values()):
+                data = pd.DataFrame({
+                    "S/No.": [1],  # Adjust this if you need a proper sequence
+                    "Service No.": [service_no],
+                    "Name": [name],
+                    "Product Name": [product_name],
+                    "Quantity": [quantity],
+                    "Mobile No.": [mobile_no],
+                    "Alternate No.": [alternate_no],
+                    "Address": [address]
+                })
+
+                save_demand_data(data)
+
 
 # Application Logic
 st.markdown("""
@@ -337,39 +390,64 @@ with col2:
         st.session_state.page = "demand"
 
 
-# Common Search Box
+# drop down---start
+UPLOAD_FOLDER = 'uploaded_files'
+
+# Function to get the latest Excel file from the folder
+def get_latest_file(directory):
+    files = [os.path.join(directory, f) for f in os.listdir(directory) if f.endswith('.xlsx')]
+    if not files:
+        return None
+    latest_file = max(files, key=os.path.getctime)
+    return latest_file
+
+# Function to get items based on item description (without filtering on 'CLOSING')
+def get_items(file_path):
+    df = pd.read_excel(file_path)
+    # Ensure the necessary column is present
+    if 'Item Description' in df.columns:
+        # Convert 'Item Description' column to a list
+        item_list = df['Item Description'].tolist()
+        return item_list
+    else:
+        return []
+
+# Function to render the search box with dropdown options
 def render_search_box():
-    # Fetch previous searches
-    previous_searches = get_previous_searches()
+    # Get the latest file
+    latest_file = get_latest_file(UPLOAD_FOLDER)
 
-    # Get the search term from the user
-    search_term = st.text_input("Search Item Description", "")
+    if latest_file:
+        # Get the items from the latest file
+        item_descriptions = get_items(latest_file)
 
+        if item_descriptions:
+            item_descriptions.insert(0, '')  # Add an empty option for default selection
+            # Dropdown (Selectbox) options
+            selected_option = st.selectbox("Search Item", item_descriptions)
+            # Display the selected option
+            st.write(f'You selected: {selected_option}')
+            if selected_option:
+                log_search(selected_option)
+            # Load data from the latest file
+            data = load_data(latest_file)
 
-    # Correct the search term based on previous searches
-    corrected_term = search_nlp_correction(search_term, previous_searches)
+            if data is not None:
+                # Process and display data according to the selected item
+                filtered_data = search_data(data, selected_option)
+                processed_data = process_data(filtered_data)
+                if not processed_data.empty:
+                    styled_data = processed_data.style.apply(color_banded_rows, axis=1)
+                    st.dataframe(styled_data, use_container_width=True, hide_index=True)
+                else:
+                    st.write("No matching items found.")
 
-    # Log the search and get updated search terms
-    updated_searches = log_search(corrected_term)
-    #print(updated_searches)
-    if search_term:
-        files = list_files() # Implement list_files to get files in UPLOAD_DIR
-        #print(files)
-        if files:
-            all_data = pd.concat([process_data(load_data(os.path.join(UPLOAD_DIR, file))) for file in files if
-                                  load_data(os.path.join(UPLOAD_DIR, file)) is not None], ignore_index=True)
-            result_data = search_data(all_data, updated_searches)
-            print(all_data)
-            if not result_data.empty:
-                styled_data = result_data.style.apply(color_banded_rows, axis=1)
-                st.dataframe(styled_data, use_container_width=True, hide_index=True)
-            else:
-                st.write("No matching items found.")
         else:
-            st.write("No files available. Please upload a file via the Admin Panel.")
-    return search_term
-    
+            st.write("No items found.")
+    else:
+        st.warning("Stock will update soon.")
 
+#--------drop down end-------
 # Main Application Logic
 if st.session_state.page == "admin":
     if 'logged_in' not in st.session_state:
