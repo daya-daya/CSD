@@ -2,6 +2,7 @@ import streamlit as st
 import pandas as pd
 import os
 import re
+import time
 from datetime import datetime
 from search_tracking import log_search
 # Define your admin credentials (for simplicity, hard-coded here)
@@ -112,14 +113,18 @@ def process_data(data):
     # Define a function to check for special characters
     def has_special_characters(value):
         if isinstance(value, str):
-            return bool(re.search(r'[^\w\s]', value))
+            return bool(re.search(r'[^\w\s]', value))  # Check for special characters
         return False
 
-    # Remove rows with None or special characters in required columns
+    # Remove rows with None or special characters in 'Index No'
     data = data.dropna(subset=required_columns)  # Drop rows with NaN values in required columns
-    data = data[~data['Index No'].apply(has_special_characters)]  # Drop rows with special characters in 'Index No'
-    data = data[data['Item Description'].apply(
-        has_special_characters)]  # Drop rows with special characters in 'Item Description'
+    data = data[~data['Index No'].apply(has_special_characters)]  # Remove rows with special characters in 'Index No'
+
+    # Remove rows where 'Item Description' contains more than one consecutive '-'
+    data = data[~data['Item Description'].str.contains(r'-{2,}', na=False)]  # Exclude descriptions with more than one hyphen
+
+    # Remove rows where 'Item Description' is NaN
+    data = data.dropna(subset=['Item Description'])  # Remove rows where 'Item Description' is NaN
 
     # Define a function to safely convert and format 'RRATE'
     def format_price(value):
@@ -134,7 +139,7 @@ def process_data(data):
     # Apply the format function to 'RRATE'
     data['Price'] = data['RRATE'].apply(format_price)
 
-    # Determine availability
+    # Determine availability based on 'Closing'
     data['Available'] = data['Closing'].apply(lambda x: 'YES' if pd.notnull(x) and x != 0 else 'SOON AVAILABLE')
 
     # Select only the required columns
@@ -404,8 +409,13 @@ def get_latest_file(directory):
 # Function to get items based on item description (without filtering on 'CLOSING')
 def get_items(file_path):
     df = pd.read_excel(file_path)
+
     # Ensure the necessary column is present
     if 'Item Description' in df.columns:
+        # Remove rows with NaN or multiple consecutive hyphens in 'Item Description'
+        df = df.dropna(subset=['Item Description'])  # Remove rows where 'Item Description' is NaN
+        df = df[~df['Item Description'].str.contains(r'-{2,}', na=False)]  # Exclude rows with more than one consecutive hyphen
+
         # Convert 'Item Description' column to a list
         item_list = df['Item Description'].tolist()
         return item_list
@@ -425,25 +435,40 @@ def render_search_box():
             item_descriptions.insert(0, '')  # Add an empty option for default selection
             # Dropdown (Selectbox) options
             selected_option = st.selectbox("Search Item", item_descriptions)
-            # Display the selected option
-            st.write(f'You selected: {selected_option}')
+
+            # Only show the data if an option is selected
             if selected_option:
-                log_search(selected_option)
-            # Load data from the latest file
-            data = load_data(latest_file)
+                # Store the timestamp when the item is selected
+                if 'show_data' not in st.session_state or st.session_state.selected_option != selected_option:
+                    st.session_state.selected_option = selected_option
+                    st.session_state.show_data = True
+                    st.session_state.show_time = time.time()
 
-            if data is not None:
-                # Process and display data according to the selected item
-                filtered_data = search_data(data, selected_option)
-                processed_data = process_data(filtered_data)
-                if not processed_data.empty:
-                    styled_data = processed_data.style.apply(color_banded_rows, axis=1)
-                    st.dataframe(styled_data, use_container_width=True, hide_index=True)
+                # Check if the time passed is less than 10 seconds
+                if st.session_state.show_data and time.time() - st.session_state.show_time < 10:
+                    st.write(f'You selected: {selected_option}')
+                    log_search(selected_option)
+
+                    # Load data from the latest file
+                    data1 = load_data(latest_file)
+
+                    if data1 is not None:
+                        # Process and display data according to the selected item
+                        filtered_data = search_data(data1, selected_option)
+                        processed_data = process_data(filtered_data)
+
+                        if not processed_data.empty:
+                            styled_data = processed_data.style.apply(color_banded_rows, axis=1)
+                            st.dataframe(styled_data, use_container_width=True, hide_index=True)
+                        else:
+                            st.write("Available Soon")
+                    else:
+                        st.write("Data not found.")
                 else:
-                    st.write("No matching items found.")
-
+                    st.session_state.show_data = False  # Hide data after 10 seconds
+                    st.experimental_rerun()  # Refresh to hide the data
         else:
-            st.write("No items found.")
+            st.write("Stock will update soon.")
     else:
         st.warning("Stock will update soon.")
 
