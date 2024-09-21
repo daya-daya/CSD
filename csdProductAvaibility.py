@@ -192,7 +192,9 @@ def save_demand_data(new_data):
 
     # Save the updated data to the file
     combined_data.to_excel(file_path, index=False, engine='openpyxl')
-    st.success("Thank you")
+    st.success("Thank you for your submission.")
+
+    # Main form handling
 
     #st.experimental_rerun()
 
@@ -473,6 +475,7 @@ def render_search_box():
         st.warning("Stock will update soon.")
 
 #--------drop down end-------
+
 # Main Application Logic
 if st.session_state.page == "admin":
     if 'logged_in' not in st.session_state:
