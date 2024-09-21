@@ -170,15 +170,13 @@ def color_banded_rows(row):
 #save Demand data
 def save_demand_data(new_data):
     today = datetime.now()
-    next_day = today + pd.DateOffset(days=1)
-    date_str = next_day.strftime("%Y-%m-%d")
-    file_name = f"Demand_{date_str}.xlsx"
+    file_name = "Demand_Data.xlsx"  # Fixed file name for appending
     file_path = os.path.join(DEMAND_DIR, file_name)
 
     # Add a 'Date and Time' column to the new data
     new_data["Date and Time"] = today.strftime("%Y-%m-%d %H:%M:%S")
 
-    # If file exists, read existing data
+    # If the file exists, read existing data
     if os.path.exists(file_path):
         existing_data = pd.read_excel(file_path, engine='openpyxl')
         # Determine the next serial number
@@ -186,13 +184,16 @@ def save_demand_data(new_data):
         new_data["S/No."] = range(max_serial_no + 1, max_serial_no + 1 + len(new_data))
         combined_data = pd.concat([existing_data, new_data], ignore_index=True)
     else:
-        # If file does not exist, initialize serial numbers
+        # If the file does not exist, initialize serial numbers
         new_data["S/No."] = range(1, len(new_data) + 1)
         combined_data = new_data
 
     # Save the updated data to the file
     combined_data.to_excel(file_path, index=False, engine='openpyxl')
     st.success("Thank you for your submission.")
+
+    # Uncomment the next line if you want to rerun the app after submission
+    # st.experimental_rerun()
 
     # Main form handling
 
