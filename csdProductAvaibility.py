@@ -3,7 +3,9 @@ import pandas as pd
 import os
 import re
 import time
+import base64
 from datetime import datetime
+from demand_panel import save_demand_data
 from search_tracking import log_search
 # Define your admin credentials (for simplicity, hard-coded here)
 st.set_page_config(layout="wide")
@@ -167,37 +169,7 @@ def color_banded_rows(row):
         'background-color: #f9f5e3; color: #333333' if row.name % 2 == 0 else 'background-color: #ffffff; color: #333333'] * len(
         row)
 
-#save Demand data
-def save_demand_data(new_data):
-    today = datetime.now()
-    file_name = "Demand_Data.xlsx"  # Fixed file name for appending
-    file_path = os.path.join(DEMAND_DIR, file_name)
-
-    # Add a 'Date and Time' column to the new data
-    new_data["Date and Time"] = today.strftime("%Y-%m-%d %H:%M:%S")
-
-    # If the file exists, read existing data
-    if os.path.exists(file_path):
-        existing_data = pd.read_excel(file_path, engine='openpyxl')
-        # Determine the next serial number
-        max_serial_no = existing_data["S/No."].max()
-        new_data["S/No."] = range(max_serial_no + 1, max_serial_no + 1 + len(new_data))
-        combined_data = pd.concat([existing_data, new_data], ignore_index=True)
-    else:
-        # If the file does not exist, initialize serial numbers
-        new_data["S/No."] = range(1, len(new_data) + 1)
-        combined_data = new_data
-
-    # Save the updated data to the file
-    combined_data.to_excel(file_path, index=False, engine='openpyxl')
-    st.success("Thank you for your submission.")
-
-    # Uncomment the next line if you want to rerun the app after submission
-    # st.experimental_rerun()
-
-    # Main form handling
-
-    #st.experimental_rerun()
+#save Demand datast
 
 
 def render_demand_form():
@@ -271,7 +243,7 @@ def render_demand_form():
             # Proceed with data processing if all required fields are filled
             if all(value for value in required_fields.values()):
                 data = pd.DataFrame({
-                    "S/No.": [1],  # Adjust this if you need a proper sequence
+                     # Adjust this if you need a proper sequence
                     "Service No.": [service_no],
                     "Name": [name],
                     "Product Name": [product_name],
@@ -287,9 +259,9 @@ def render_demand_form():
 # Application Logic
 st.markdown("""
     <marquee behavior="scroll" direction="left" scrollamount="8" style="color:red;font-weight:bold;background-color:yellow">
-        CANTEEN TIMINGS: 09:00-12:45 AND 14:00-18:00 FRIDAY HALFDAY WORKING AND MONDAY WEEKLY OFF
+        CANTEEN TIMINGS: 09:00-12:45 HRS AND 14:00-18:00 HRS FRIDAY HALFDAY WORKING AND MONDAY WEEKLY OFF
         &nbsp;&nbsp;&nbsp;&nbsp;
-        CANTEEN TIMINGS: 09:00-12:45 AND 14:00-18:00 FRIDAY HALFDAY WORKING AND MONDAY WEEKLY OFF
+        CANTEEN TIMINGS: 09:00-12:45 HRS AND 14:00-18:00 HRS FRIDAY HALFDAY WORKING AND MONDAY WEEKLY OFF
     </marquee>
 """, unsafe_allow_html=True)
 
@@ -376,14 +348,108 @@ st.markdown(f"""
         }}
     </style>
 """, unsafe_allow_html=True)
+# Function to convert image to Base64
+def image_to_base64(image_path):
+    with open(image_path, "rb") as image_file:
+        encoded_string = base64.b64encode(image_file.read()).decode("utf-8")
+    return encoded_string
 
-st.markdown("""
-    <div class="header-container">
-        <div class="header-title"><b>UNIT RUN CANTEEN</b></div>
-        <div class="header-subtitle"><b>THE PARACHUTE REGIMENT TRAINING CENTRE</b></div>
+# Function to convert image to Base64
+def image_to_base64(image_path):
+    with open(image_path, "rb") as image_file:
+        encoded_string = base64.b64encode(image_file.read()).decode("utf-8")
+    return encoded_string
+
+# Function to convert image to Base64
+def image_to_base64(image_path):
+    with open(image_path, "rb") as image_file:
+        encoded_string = base64.b64encode(image_file.read()).decode("utf-8")
+    return encoded_string
+
+# Function to convert image to Base64
+def image_to_base64(image_path):
+    with open(image_path, "rb") as image_file:
+        encoded_string = base64.b64encode(image_file.read()).decode("utf-8")
+    return encoded_string
+
+# Path to your logo images
+logo_path1 = "logos/paraLogo.png"
+logo_path2 = "logos/BalidanBadge.png"
+
+# Convert the logos to Base64
+logo_base64 = image_to_base64(logo_path1)
+logo_base65 = image_to_base64(logo_path2)
+
+# Use the Base64 strings in your HTML
+st.markdown(f"""
+    <div class="header-container" style="display: flex; justify-content: space-between; align-items: center; background-color: #4CAF50; padding: 20px; border-radius: 8px;">
+        <!-- Left logo -->
+        <div style="flex: 1; display: flex; justify-content: flex-start; align-items: center;">
+            <img src="data:image/png;base64,{logo_base64}" alt="Left Logo" style="width:100px;"/>  <!-- Adjusted width -->
+        </div>
+        <!-- Title and Subtitle -->
+        <div style="flex: 2; text-align: center;">
+            <div class="header-title" style="font-size: 28px; color: white;"><b>UNIT RUN CANTEEN</b></div>
+            <div class="header-subtitle" style="font-size: 18px; color: white;"><b>THE PARACHUTE REGIMENT TRAINING CENTRE</b></div>
+        </div>
+        <!-- Right logo -->
+        <div style="flex: 1; display: flex; justify-content: flex-end; align-items: center;">
+            <img src="data:image/png;base64,{logo_base65}" alt="Right Logo" style="width:80px;"/>  <!-- Adjusted width -->
+        </div>
     </div>
 """, unsafe_allow_html=True)
+#image marquee
+import streamlit as st
+import os
+import base64
 
+
+# Function to convert image to base64 string
+def image_to_base64(image_path):
+    with open(image_path, "rb") as f:
+        return base64.b64encode(f.read()).decode()
+
+
+# Define the path to the images folder
+image_folder = 'img'
+
+# Get a list of image files in the folder
+image_files = [f for f in os.listdir(image_folder) if f.endswith(('jpg', 'jpeg', 'png', 'gif'))]
+
+# Check if any images were found
+if not image_files:
+    st.write("No images found in the folder.")
+else:
+    # Create a marquee element for the images with increased spacing
+    images_html = ''.join(
+        f'<img src="data:image/jpeg;base64,{image_to_base64(os.path.join(image_folder, image))}" style="margin: 0 40px; width: 100px;">'
+        # Increased margin
+        for image in image_files
+    )
+
+    # Duplicate the images to ensure a continuous loop
+    continuous_images_html = images_html * 3  # Adjust the multiplier as needed
+
+    # Add the marquee HTML
+    st.markdown(
+        f"""
+        <style>
+            .marquee {{
+                overflow: hidden;
+                white-space: nowrap;
+                box-sizing: border-box;
+            }}
+        </style>
+        <div class="marquee">
+            <marquee behavior="scroll" direction="left" scrollamount="5">
+                {continuous_images_html}
+            </marquee>
+        </div>
+        """,
+        unsafe_allow_html=True
+    )
+
+#image marquee ends
 # Initialize session state for page navigation
 if 'page' not in st.session_state:
     st.session_state.page = "home"
